@@ -1,1 +1,1 @@
-"""PostgreSQL infrastructure; no domain tables yet."""
+"""PostgreSQL infrastructure and shared persistence primitives."""

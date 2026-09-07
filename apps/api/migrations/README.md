@@ -1,14 +1,20 @@
 # Migrations
 
-Run Alembic from `apps/api` with `LEDGERX_DATABASE_URL` configured (or its local `.env`).
-`0001_foundation` is an intentionally empty, reversible baseline. Alembic creates only
-its own version table. There are no product models, tables, or seed records.
+Run Alembic from apps/api with LEDGERX_DATABASE_URL configured (or its local .env).
+0001_foundation remains an empty baseline. 0002_identity_ownership creates users,
+workspaces, their constraints, and the users.updated_at trigger/function. No seeds.
 
-Apply explicitly with `uv run alembic upgrade head`. The API never runs migrations
-or `metadata.create_all()` at startup. Check drift with `uv run alembic check`.
-Create future revisions with `uv run alembic revision --autogenerate -m "description"`,
-then review constraints and upgrade/downgrade behavior before applying.
+Apply with `uv run alembic upgrade head`; check drift with `uv run alembic check`.
+The API never runs migrations or metadata.create_all() at startup. Register future
+models in ledgerx/db/models.py before generating a revision, and review generated
+SQL. Trigger/function and check-expression changes require manual migration review;
+Alembic check alone does not verify them.
 
-On a disposable development database, verify `upgrade head`, `downgrade base`, then
-`upgrade head`. Never run downgrade checks against real data. Production credential
-separation and migration/backup procedures must be established before deployment.
+On a disposable database verify upgrade head, downgrade base, upgrade head, check,
+and heads. Downgrade deletes foundation records: do not use it on real data without
+an approved backup/recovery plan; prefer roll-forward once populated.
+
+Automated integration tests use LEDGERX_TEST_DATABASE_URL and unique schemas, running
+real migrations and dropping only their own schema afterward. The test role requires
+schema creation privileges. Never point the test URL at production. Alembic accepts
+an explicit connection through Config.attributes for isolated migration tests.

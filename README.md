@@ -2,7 +2,7 @@
 
 Personal financial intelligence platform. This repository currently implements only
 the development foundation: a Next.js page, FastAPI operational endpoints, and
-PostgreSQL/SQLAlchemy/Alembic plumbing. No financial or authentication features exist.
+PostgreSQL/SQLAlchemy/Alembic plumbing plus users/workspaces ownership tables. No financial or authentication features exist.
 
 ## Requirements
 
@@ -70,9 +70,9 @@ uv run alembic heads
 uv run alembic upgrade head --sql
 ```
 
-The PostgreSQL test skips explicitly unless `LEDGERX_TEST_DATABASE_URL` points to
-a dedicated PostgreSQL database. To run it, set that variable and run
-`uv run pytest -m integration`. An unreachable configured database fails the test.
+The PostgreSQL tests skip explicitly unless `LEDGERX_TEST_DATABASE_URL` points to
+a dedicated PostgreSQL database. To run them, set that variable and run
+`uv run pytest -m integration`. An unreachable configured database fails the tests. Foundation tests create and clean up a unique schema per test; the dedicated test role needs schema creation privileges.
 Migration verification uses a disposable database: `uv run alembic upgrade head`,
 `uv run alembic check`, `uv run alembic downgrade base`, `uv run alembic upgrade head`.
 
@@ -91,8 +91,7 @@ and `docker compose exec web npm run ...`. Never place secrets in `NEXT_PUBLIC_*
 
 `apps/web` owns presentation. `apps/api/src/ledgerx/main.py` composes configuration,
 HTTP routes, and database lifecycle. `api/`, `core/`, and `db/` separate transport,
-operational concerns, and persistence. Domain directories will be added when they
-contain authorized implementations. Alembic's only revision is an empty baseline.
+operational concerns, and persistence. The identity module contains User and Workspace persistence models. Alembic revision 0002_identity_ownership follows the empty baseline. See [database ownership ADR](docs/adr/0002-database-ownership-foundation.md).
 
 See [architecture](docs/ARCHITECTURE.md), [foundation ADR](docs/adr/0001-development-foundation.md),
 [current verification status](docs/STATUS.md), and [contribution guide](CONTRIBUTING.md).
