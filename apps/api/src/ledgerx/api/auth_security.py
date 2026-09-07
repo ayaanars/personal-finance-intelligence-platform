@@ -69,8 +69,24 @@ class AuthContext:
 
 
 def authenticated_context(request: Request) -> Iterator[AuthContext]:
+    yield from transactional_context(request, csv_upload=False)
+
+
+def authenticated_csv_context(request: Request) -> Iterator[AuthContext]:
+    """Same session, origin and CSRF rules; only the upload media type differs."""
+    yield from transactional_context(request, csv_upload=True)
+
+
+def transactional_context(request: Request, *, csv_upload: bool) -> Iterator[AuthContext]:
     unsafe = request.method not in SAFE_METHODS
-    if unsafe:
+    if csv_upload:
+        check_origin(request)
+        if request.headers.get("content-type", "").lower() not in {
+            "text/csv",
+            "text/csv; charset=utf-8",
+        }:
+            raise AuthError(415, "CSV_REQUIRED", "Use text/csv with UTF-8 encoding")
+    elif unsafe:
         mutation_boundary(request)
     else:
         check_origin(request)
@@ -87,3 +103,4 @@ def authenticated_context(request: Request) -> Iterator[AuthContext]:
 
 # Commit (or rollback) before sending a response, retaining locks through the use case.
 Authenticated = Annotated[AuthContext, Depends(authenticated_context, scope="function")]
+AuthenticatedCSV = Annotated[AuthContext, Depends(authenticated_csv_context, scope="function")]

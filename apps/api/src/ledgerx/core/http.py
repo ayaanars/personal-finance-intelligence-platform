@@ -9,13 +9,15 @@ from starlette.exceptions import HTTPException
 from starlette.responses import JSONResponse
 
 from ledgerx.modules.identity.errors import AuthError
+from ledgerx.modules.imports.errors import ImportFailure
 
 logger = logging.getLogger("ledgerx.http")
 
 
 def install_http_handlers(app: FastAPI) -> None:
     @app.exception_handler(AuthError)
-    async def auth_error(request: Request, exc: AuthError) -> JSONResponse:
+    @app.exception_handler(ImportFailure)
+    async def auth_error(request: Request, exc: AuthError | ImportFailure) -> JSONResponse:
         return JSONResponse(
             status_code=exc.status,
             content={

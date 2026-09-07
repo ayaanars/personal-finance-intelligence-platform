@@ -44,7 +44,7 @@ def test_readiness_failure_is_safe() -> None:
         assert response.json()["error"]["correlation_id"] == response.headers["X-Correlation-ID"]
 
 
-def test_openapi_only_exposes_health_and_authentication_operations() -> None:
+def test_openapi_only_exposes_health_authentication_and_import_operations() -> None:
     app = create_app(
         Settings(
             database_url=SecretStr("postgresql+psycopg://synthetic:synthetic@127.0.0.1:1/test")
@@ -59,6 +59,10 @@ def test_openapi_only_exposes_health_and_authentication_operations() -> None:
         "/api/v1/auth/logout-all",
         "/api/v1/auth/csrf",
         "/api/v1/me",
+        "/api/v1/imports",
+        "/api/v1/imports/{import_id}",
+        "/api/v1/imports/{import_id}/rows",
+        "/api/v1/imports/{import_id}/finalize",
     }
 
 

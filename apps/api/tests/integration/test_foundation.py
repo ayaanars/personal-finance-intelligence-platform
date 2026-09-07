@@ -224,7 +224,7 @@ def test_composite_key_rejects_cross_owner_child(db: Connection) -> None:
 
 def test_migration_cycle_and_schema(db: Connection) -> None:
     config = migration_config(db)
-    assert ScriptDirectory.from_config(config).get_heads() == ["0003_authentication"]
+    assert ScriptDirectory.from_config(config).get_heads() == ["0004_csv_import"]
     assert set(inspect(db).get_table_names()) == {
         "alembic_version",
         "users",
@@ -232,15 +232,27 @@ def test_migration_cycle_and_schema(db: Connection) -> None:
         "user_credentials",
         "user_sessions",
         "auth_audit_events",
+        "statement_imports",
+        "import_rows",
+        "imported_transactions",
+        "import_audit_events",
     }
     command.check(config)
-    assert db.scalar(text("SELECT version_num FROM alembic_version")) == "0003_authentication"
+    assert db.scalar(text("SELECT version_num FROM alembic_version")) == "0004_csv_import"
     for table in ("users", "workspaces"):
         assert all(not column["nullable"] for column in inspect(db).get_columns(table))
     command.downgrade(config, "0001_foundation")
     assert inspect(db).get_table_names() == ["alembic_version"]
     assert db.scalar(text("SELECT to_regprocedure('ledgerx_touch_user_updated_at()')")) is None
     assert db.scalar(text("SELECT to_regprocedure('ledgerx_auth_audit_append_only()')")) is None
+    for name in (
+        "ledgerx_import_append_only",
+        "ledgerx_import_transition",
+        "ledgerx_import_complete_count",
+        "ledgerx_import_fact_ready",
+        "ledgerx_import_fact_completed",
+    ):
+        assert db.scalar(text("SELECT to_regprocedure(:name)"), {"name": name + "()"}) is None
     command.upgrade(config, "head")
     command.check(config)
     command.downgrade(config, "base")

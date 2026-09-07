@@ -1,8 +1,10 @@
 # LedgerX
 
 Personal financial intelligence platform. The repository implements a development
-foundation and backend email/password authentication with PostgreSQL sessions.
-The frontend remains a foundation page. Financial features are not implemented.
+foundation, backend authentication and canonical CSV statement imports with
+PostgreSQL staging and explicit finalization. The frontend remains a foundation page.
+The implemented CSV contract is documented in [API.md](docs/API.md) and
+[ADR 0004](docs/adr/0004-canonical-csv-import.md).
 
 ## Requirements
 
