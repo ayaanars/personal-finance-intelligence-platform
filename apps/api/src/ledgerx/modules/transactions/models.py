@@ -20,6 +20,7 @@ from ledgerx.db.primitives import CreatedAtMixin, IdentityMixin
 class ImportedTransaction(IdentityMixin, CreatedAtMixin, Base):
     __tablename__ = "imported_transactions"
     __table_args__ = (
+        UniqueConstraint("user_id", "id", name="uq_imported_transactions_owner_id"),
         ForeignKeyConstraint(
             ["user_id", "import_id"],
             ["statement_imports.user_id", "statement_imports.id"],

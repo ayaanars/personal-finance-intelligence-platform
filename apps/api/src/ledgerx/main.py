@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from ledgerx.api.auth import router as auth_router
 from ledgerx.api.health import router
 from ledgerx.api.imports import router as imports_router
+from ledgerx.api.transactions import router as transactions_router
 from ledgerx.core.config import Settings
 from ledgerx.core.http import install_http_handlers
 from ledgerx.db.session import build_engine, build_session_factory
@@ -35,17 +36,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         CORSMiddleware,
         allow_origins=[configuration.first_party_origin],
         allow_credentials=True,
-        allow_methods=["GET", "POST"],
+        allow_methods=["GET", "POST", "PATCH"],
         allow_headers=[
             "Content-Type",
             "X-CSRF-Token",
             "X-Request-ID",
             "X-Filename",
             "Idempotency-Key",
+            "If-Match",
         ],
     )
     install_http_handlers(app)
     app.include_router(router)
     app.include_router(auth_router)
     app.include_router(imports_router)
+    app.include_router(transactions_router)
     return app

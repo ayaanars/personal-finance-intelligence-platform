@@ -21,6 +21,7 @@ from ledgerx.modules.imports.schemas import (
     RowView,
 )
 from ledgerx.modules.transactions.models import ImportedTransaction
+from ledgerx.modules.transactions.service import enrich_import
 
 
 def utcnow() -> datetime:
@@ -267,6 +268,7 @@ def finalize(
             ),
         )
     )
+    enrich_import(db, principal, batch.id)
     # Check the clock again after copying: expiry during processing must roll back all facts.
     now = utcnow()
     if now >= batch.expires_at:
