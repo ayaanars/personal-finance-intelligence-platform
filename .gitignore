@@ -1,0 +1,47 @@
+# Local environment files; only reviewed setup examples are public.
+.env
+.env.*
+!/.env.example
+!/apps/api/.env.example
+
+# Local workspace files.
+/.tools/
+AGENTS.md
+
+# Internal planning and execution records.
+/docs/API.md
+/docs/ARCHITECTURE.md
+/docs/DATABASE.md
+/docs/PRODUCT.md
+/docs/ROADMAP.md
+/docs/SECURITY.md
+/docs/STATUS.md
+
+# Python environments, bytecode, and tool caches.
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Python packaging output.
+/apps/api/build/
+/apps/api/dist/
+*.egg-info/
+
+# Installed frontend dependencies and generated Next.js output.
+node_modules/
+/apps/web/.next/
+/apps/web/out/
+/apps/web/next-env.d.ts
+*.tsbuildinfo
+
+# Test coverage output.
+.coverage
+.coverage.*
+htmlcov/
+coverage/
+
+# Runtime and tool logs.
+*.log

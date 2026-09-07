@@ -1,0 +1,39 @@
+name: ledgerx
+services:
+  db:
+    image: postgres:17-bookworm@sha256:051f7b7b3abdd564d5d1bd1e8c4b9c1b6e77087d1dd22020ede611c096a272e0
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  api:
+    build: ./apps/api
+    environment:
+      LEDGERX_ENVIRONMENT: development
+      LEDGERX_DATABASE_URL: ${LEDGERX_DOCKER_DATABASE_URL:?Set URL with hostname db in .env}
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./apps/api/src:/app/src:ro
+      - ./apps/api/tests:/app/tests:ro
+      - ./apps/api/migrations:/app/migrations:ro
+    depends_on:
+      db:
+        condition: service_healthy
+  web:
+    build: ./apps/web
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./apps/web/src:/app/src:ro
+volumes:
+  postgres_data:
