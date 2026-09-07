@@ -44,13 +44,22 @@ def test_readiness_failure_is_safe() -> None:
         assert response.json()["error"]["correlation_id"] == response.headers["X-Correlation-ID"]
 
 
-def test_openapi_only_exposes_health_operations() -> None:
+def test_openapi_only_exposes_health_and_authentication_operations() -> None:
     app = create_app(
         Settings(
             database_url=SecretStr("postgresql+psycopg://synthetic:synthetic@127.0.0.1:1/test")
         )
     )
-    assert set(app.openapi()["paths"]) == {"/health/live", "/health/ready"}
+    assert set(app.openapi()["paths"]) == {
+        "/health/live",
+        "/health/ready",
+        "/api/v1/auth/register",
+        "/api/v1/auth/login",
+        "/api/v1/auth/logout",
+        "/api/v1/auth/logout-all",
+        "/api/v1/auth/csrf",
+        "/api/v1/me",
+    }
 
 
 def test_unexpected_error_is_redacted_and_correlated() -> None:

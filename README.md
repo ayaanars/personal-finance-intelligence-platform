@@ -1,8 +1,8 @@
 # LedgerX
 
-Personal financial intelligence platform. This repository currently implements only
-the development foundation: a Next.js page, FastAPI operational endpoints, and
-PostgreSQL/SQLAlchemy/Alembic plumbing plus users/workspaces ownership tables. No financial or authentication features exist.
+Personal financial intelligence platform. The repository implements a development
+foundation and backend email/password authentication with PostgreSQL sessions.
+The frontend remains a foundation page. Financial features are not implemented.
 
 ## Requirements
 
@@ -53,6 +53,10 @@ npm run dev
 ```
 
 The frontend page has no API dependency and requires no environment variables.
+`LEDGERX_FIRST_PARTY_ORIGIN` defaults to `http://localhost:3000`. Set one exact
+browser origin, without a trailing slash. HTTP origins are restricted to loopback;
+HTTPS enables Secure cookies with the `__Host-` prefix. Production runtime remains
+disabled pending deployment/security gates; this is development/test infrastructure.
 Backend settings read `apps/api/.env` when launched from that directory; environment
 variables override the file. The URL is required. Liveness works with an unavailable
 database; readiness returns a generic 503. No migrations run at application startup.
@@ -91,7 +95,37 @@ and `docker compose exec web npm run ...`. Never place secrets in `NEXT_PUBLIC_*
 
 `apps/web` owns presentation. `apps/api/src/ledgerx/main.py` composes configuration,
 HTTP routes, and database lifecycle. `api/`, `core/`, and `db/` separate transport,
-operational concerns, and persistence. The identity module contains User and Workspace persistence models. Alembic revision 0002_identity_ownership follows the empty baseline. See [database ownership ADR](docs/adr/0002-database-ownership-foundation.md).
+operational concerns, and persistence. The identity module owns transactional
+registration, Argon2id credentials, opaque sessions and authentication audit events.
+Revision `0003_authentication` follows the users/workspaces foundation. See the
+[authentication ADR](docs/adr/0003-authentication-sessions.md) and
+[authentication threat model](docs/threat-model/authentication.md).
+
+## Authentication API
+
+All routes use `/api/v1`. `POST /auth/register` accepts only `email` and `password`,
+creates a user/private workspace atomically, and returns 201 with a safe profile.
+Passwords allow 15–128 characters without composition rules or trimming. Email
+syntax is ASCII-only, space-trimmed and lowercased for lookup; aliases are preserved.
+Registration does not sign in. `POST /auth/login` accepts the same fields and returns
+204 with an HttpOnly session cookie; it never returns the session token in JSON.
+
+`GET /me` returns the user/workspace. `GET /auth/csrf` returns a newly rotated
+`csrf_token`; send it as `X-CSRF-Token` with `Content-Type: application/json` on
+`POST /auth/logout` or `POST /auth/logout-all` (empty JSON object is sufficient).
+Both return 204 and clear the cookie after committing revocation. Read-only requests
+do not require the CSRF header. Browser requests use the configured first-party
+origin and credentialed cookies. CSRF rotation invalidates tokens held in other tabs.
+
+Sessions expire after 30 idle minutes or seven absolute days. Server idle refresh
+runs at most once per minute. Logout-all revokes existing sessions; a subsequent
+successful password login can create a new one. Future protected endpoints use
+`Authenticated` from `api/auth_security.py`, retain its transaction through their
+operation, and add owner-scoped object authorization.
+
+Rate limiting, production hash calibration, email verification, password recovery,
+OAuth and MFA are deferred. No recovery bypass exists. Public launch requires
+abuse controls and the deployment gates documented in the threat model.
 
 See [architecture](docs/ARCHITECTURE.md), [foundation ADR](docs/adr/0001-development-foundation.md),
 [current verification status](docs/STATUS.md), and [contribution guide](CONTRIBUTING.md).

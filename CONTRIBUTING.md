@@ -1,7 +1,8 @@
 # Contributing
 
 Read `AGENTS.md`, `docs/ARCHITECTURE.md`, and relevant design documents before edits.
-The current implementation scope is the development foundation only.
+The implemented scope is the development foundation and backend authentication.
+Financial features and the authentication UI require separate authorization.
 
 Use the installation and check commands in README.md. Commit dependency manifests
 and lockfiles together. Use `uv add --bounds exact` (or `--dev --bounds exact`) and

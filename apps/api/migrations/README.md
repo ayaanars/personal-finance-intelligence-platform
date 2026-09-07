@@ -3,6 +3,12 @@
 Run Alembic from apps/api with LEDGERX_DATABASE_URL configured (or its local .env).
 0001_foundation remains an empty baseline. 0002_identity_ownership creates users,
 workspaces, their constraints, and the users.updated_at trigger/function. No seeds.
+0003_authentication adds credentials, hash-only sessions, fixed-shape authentication
+audit events and an audit append-only trigger/function. It creates no financial
+tables. Downgrade to 0002 removes all credentials/sessions/auth audit data while
+retaining users/workspaces, so use it only for disposable verification. Existing
+foundation users without credentials cannot log in; this phase adds no credential
+backfill or operator password-reset bypass.
 
 Apply with `uv run alembic upgrade head`; check drift with `uv run alembic check`.
 The API never runs migrations or metadata.create_all() at startup. Register future

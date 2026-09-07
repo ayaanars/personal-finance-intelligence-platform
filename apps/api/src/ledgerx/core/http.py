@@ -4,13 +4,44 @@ from collections.abc import Awaitable, Callable
 from uuid import UUID, uuid4
 
 from fastapi import FastAPI, Request, Response
+from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException
 from starlette.responses import JSONResponse
+
+from ledgerx.modules.identity.errors import AuthError
 
 logger = logging.getLogger("ledgerx.http")
 
 
 def install_http_handlers(app: FastAPI) -> None:
+    @app.exception_handler(AuthError)
+    async def auth_error(request: Request, exc: AuthError) -> JSONResponse:
+        return JSONResponse(
+            status_code=exc.status,
+            content={
+                "error": {
+                    "code": exc.code,
+                    "message": exc.message,
+                    "correlation_id": request.state.correlation_id,
+                }
+            },
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
+        # Pydantic's default errors include raw input (including passwords and
+        # unknown-field values). Do not serialize any of that input or context.
+        return JSONResponse(
+            status_code=422,
+            content={
+                "error": {
+                    "code": "VALIDATION_ERROR",
+                    "message": "Request fields are invalid",
+                    "correlation_id": request.state.correlation_id,
+                }
+            },
+        )
+
     @app.exception_handler(HTTPException)
     async def http_error(request: Request, exc: HTTPException) -> JSONResponse:
         code = "SERVICE_NOT_READY" if exc.status_code == 503 else "HTTP_ERROR"

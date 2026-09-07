@@ -224,15 +224,23 @@ def test_composite_key_rejects_cross_owner_child(db: Connection) -> None:
 
 def test_migration_cycle_and_schema(db: Connection) -> None:
     config = migration_config(db)
-    assert ScriptDirectory.from_config(config).get_heads() == ["0002_identity_ownership"]
-    assert set(inspect(db).get_table_names()) == {"alembic_version", "users", "workspaces"}
+    assert ScriptDirectory.from_config(config).get_heads() == ["0003_authentication"]
+    assert set(inspect(db).get_table_names()) == {
+        "alembic_version",
+        "users",
+        "workspaces",
+        "user_credentials",
+        "user_sessions",
+        "auth_audit_events",
+    }
     command.check(config)
-    assert db.scalar(text("SELECT version_num FROM alembic_version")) == "0002_identity_ownership"
+    assert db.scalar(text("SELECT version_num FROM alembic_version")) == "0003_authentication"
     for table in ("users", "workspaces"):
         assert all(not column["nullable"] for column in inspect(db).get_columns(table))
     command.downgrade(config, "0001_foundation")
     assert inspect(db).get_table_names() == ["alembic_version"]
     assert db.scalar(text("SELECT to_regprocedure('ledgerx_touch_user_updated_at()')")) is None
+    assert db.scalar(text("SELECT to_regprocedure('ledgerx_auth_audit_append_only()')")) is None
     command.upgrade(config, "head")
     command.check(config)
     command.downgrade(config, "base")

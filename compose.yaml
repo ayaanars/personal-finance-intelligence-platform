@@ -19,6 +19,7 @@ services:
     build: ./apps/api
     environment:
       LEDGERX_ENVIRONMENT: development
+      LEDGERX_FIRST_PARTY_ORIGIN: ${LEDGERX_FIRST_PARTY_ORIGIN:-http://localhost:3000}
       LEDGERX_DATABASE_URL: ${LEDGERX_DOCKER_DATABASE_URL:?Set URL with hostname db in .env}
     ports:
       - "127.0.0.1:8000:8000"
