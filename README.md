@@ -2,7 +2,9 @@
 
 Personal financial intelligence platform. The repository implements a development
 foundation, backend authentication and canonical CSV statement imports with
-PostgreSQL staging and explicit finalization. The frontend remains a foundation page.
+PostgreSQL staging and explicit finalization. Phase 10's public product page and
+login/register flow are complete. The existing authenticated statement-to-history
+implementation is preserved in progress; private-app completion is a separate task.
 The implemented CSV contract is documented in [API.md](docs/API.md) and
 [ADR 0004](docs/adr/0004-canonical-csv-import.md).
 
@@ -54,7 +56,14 @@ npm ci
 npm run dev
 ```
 
-The frontend page has no API dependency and requires no environment variables.
+The public landing page is `/`. Authentication lives at `/login` and `/register`;
+the private product starts at `/app`. Upload at `/app/import` and review history at
+`/app/transactions`. Existing preview/detail URLs redirect to their `/app` equivalents.
+
+The frontend forwards `/api/v1/*` to FastAPI using the server-only
+`LEDGERX_API_ORIGIN` (native default `http://127.0.0.1:8000`; Compose sets
+`http://api:8000`). Open the browser at `http://localhost:3000` to match the backend
+first-party origin. Rebuild/restart Next.js after changing this setting.
 `LEDGERX_FIRST_PARTY_ORIGIN` defaults to `http://localhost:3000`. Set one exact
 browser origin, without a trailing slash. HTTP origins are restricted to loopback;
 HTTPS enables Secure cookies with the `__Host-` prefix. Production runtime remains
@@ -85,6 +94,7 @@ Migration verification uses a disposable database: `uv run alembic upgrade head`
 From `apps/web`:
 
 ```powershell
+npm run test
 npm run lint
 npm run typecheck
 npm run build
@@ -131,3 +141,11 @@ abuse controls and the deployment gates documented in the threat model.
 
 See [architecture](docs/ARCHITECTURE.md), [foundation ADR](docs/adr/0001-development-foundation.md),
 [current verification status](docs/STATUS.md), and [contribution guide](CONTRIBUTING.md).
+
+## Product scope
+
+The client uses cookie sessions, CSRF-protected raw CSV uploads, explicit
+whole-import finalization, bounded transaction pages and versioned category corrections.
+Amounts remain exact decimal strings. The landing-page example is clearly labeled
+synthetic; private screens always read the real backend. Behavioral analytics and
+other planned intelligence remain unavailable. See [ADR 0006](docs/adr/0006-public-entry-and-product-client.md).

@@ -1,0 +1,835 @@
+/* Public-only refinements. Private product layout and behavior are unchanged. */
+.marketing {
+  --marketing-width: 1760px;
+}
+.marketing-nav {
+  padding-inline: 48px;
+  gap: clamp(40px, 5vw, 96px);
+}
+.marketing-hero {
+  padding: 56px 48px 72px;
+  gap: clamp(40px, 5vw, 88px);
+  grid-template-columns: 0.95fr 1.05fr;
+}
+.hero-copy h1 {
+  font-size: clamp(58px, 5vw, 88px);
+}
+.hero-copy > p:not(.eyebrow) {
+  max-width: 430px;
+  font-size: 17px;
+}
+.hero-actions .button {
+  min-height: 50px;
+  padding-inline: 24px;
+}
+.marketing .product-example {
+  box-shadow: 18px 18px 0 #e1e9df;
+}
+.marketing .product-example figcaption {
+  padding: 11px 28px;
+  font-size: 11px;
+}
+.marketing .example-heading {
+  padding: 18px 28px;
+}
+.marketing .example-heading > span:last-child {
+  font-size: 12px;
+}
+.marketing .example-intro {
+  padding: 28px 28px 12px;
+}
+.marketing .example-intro h2 {
+  font-size: 26px;
+}
+.marketing .example-intro p {
+  font-size: 12px;
+}
+.marketing .example-list {
+  padding: 8px 16px 16px;
+}
+.marketing .example-list button {
+  padding: 18px 12px;
+  min-height: 84px;
+}
+.marketing .activity-summary strong {
+  font-size: 15px;
+}
+.marketing .activity-summary span {
+  font-size: 11px;
+}
+.marketing .example-understanding {
+  padding: 20px 28px;
+}
+.marketing .example-understanding > span,
+.marketing .understanding-note {
+  font-size: 11px;
+}
+.marketing .example-understanding code {
+  font-size: 12px;
+}
+.marketing .understanding-result strong {
+  font-size: 15px;
+}
+.marketing .understanding-result p {
+  font-size: 12px;
+}
+.marketing .example-footnote {
+  padding: 14px 28px;
+  font-size: 11px;
+}
+.marketing .understanding-result {
+  animation: context-appear 0.24s ease-out;
+}
+.understand-section {
+  padding: 72px 48px;
+}
+.section-title h2 {
+  font-size: clamp(34px, 3vw, 52px);
+}
+.process-layout {
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: clamp(50px, 7vw, 120px);
+}
+.process-start {
+  padding: 36px 40px;
+}
+.process-start h3 {
+  font-size: 36px;
+}
+.process-start p {
+  max-width: 350px;
+  font-size: 14px;
+}
+.process-steps {
+  padding: 12px 0;
+}
+.process-steps article {
+  gap: 28px;
+}
+.process-steps h3 {
+  font-size: 22px;
+}
+.process-steps p {
+  max-width: 480px;
+  font-size: 14px;
+}
+.vision-section {
+  display: block;
+  padding: 72px max(48px, calc((100vw - 1664px) / 2));
+}
+.vision-heading {
+  max-width: 740px;
+  margin-bottom: 40px;
+}
+.vision-heading h2 {
+  font-size: clamp(34px, 3vw, 52px);
+}
+.vision-heading > p:not(.eyebrow) {
+  max-width: 620px;
+  font-size: 15px;
+}
+.vision-heading .vision-disclosure {
+  max-width: 660px;
+  font-size: 12px !important;
+}
+.intelligence-examples {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 26px;
+  align-items: start;
+}
+.concept-surface {
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #c4d3c0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.concept-caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  background: #f3f6f0;
+  border-bottom: 1px solid #d9e2d5;
+  padding: 13px 28px;
+  font-size: 10px;
+  color: #4c6050;
+}
+.concept-caption > span:last-child {
+  text-align: right;
+}
+.concept-body {
+  padding: 30px 32px;
+}
+.concept-body h3,
+.unusual-intro h3 {
+  font-size: clamp(26px, 2.3vw, 34px);
+  font-weight: 500;
+  line-height: 1.16;
+  letter-spacing: -0.04em;
+  margin: 0;
+}
+.concept-body > p,
+.unusual-intro > p {
+  margin-top: 14px;
+  max-width: 400px;
+  font-size: 13px;
+}
+.spending-readout {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 30px;
+}
+.spending-readout > div > span {
+  display: block;
+  color: #5b6b5b;
+  font-size: 11px;
+}
+.spending-readout strong {
+  display: block;
+  font-size: 32px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  margin-top: 4px;
+}
+.baseline-readout {
+  text-align: right;
+}
+.baseline-readout strong {
+  font-size: 17px;
+  letter-spacing: -0.015em;
+}
+.baseline-readout strong span {
+  font-size: 11px;
+  font-weight: 400;
+  color: #566958;
+}
+.spending-chart {
+  position: relative;
+  height: 218px;
+  margin: 24px 0 0;
+}
+.chart-baseline {
+  position: absolute;
+  top: 43%;
+  bottom: 42%;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed #8fa489;
+  border-bottom: 1px dashed #8fa489;
+  background: #f3f7ef;
+  pointer-events: none;
+}
+.chart-baseline > span {
+  position: absolute;
+  right: 0;
+  top: -20px;
+  color: #52694e;
+  font-size: 9px;
+}
+.chart-columns {
+  position: relative;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  align-items: end;
+}
+.chart-month {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
+  gap: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  position: relative;
+  color: #526752;
+}
+.chart-month:hover {
+  background: transparent;
+}
+.chart-value {
+  font-size: 10px;
+  margin-bottom: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.chart-bar {
+  display: block;
+  width: 70%;
+  height: var(--bar-height);
+  max-height: 165px;
+  background: #b6cbb0;
+  border-radius: 4px 4px 0 0;
+  transform-origin: bottom;
+  transition:
+    background 0.22s ease,
+    transform 0.22s ease;
+}
+.chart-month[aria-pressed="true"] {
+  color: #164b32;
+}
+.chart-month[aria-pressed="true"] .chart-bar {
+  background: #236244;
+  transform: scaleX(1.08);
+}
+.chart-month:hover .chart-bar {
+  background: #74996a;
+}
+.chart-month-name {
+  font-size: 11px;
+  margin-top: 9px;
+  font-weight: 500;
+}
+.chart-context {
+  min-height: 42px;
+  font-size: 12px !important;
+  color: #385c3e;
+  animation: context-appear 0.22s ease;
+}
+.demo-takeaway {
+  display: flex;
+  gap: 18px;
+  border-top: 1px solid #dce5d7;
+  padding-top: 20px;
+  margin-top: 8px;
+  align-items: baseline;
+}
+.demo-takeaway strong {
+  font-size: 12px;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.demo-takeaway span {
+  font-size: 11px;
+  color: #586859;
+  max-width: 340px;
+}
+.period-selector {
+  display: flex;
+  gap: 4px;
+  border: 1px solid #d1ddcb;
+  border-radius: 8px;
+  padding: 4px;
+  margin-top: 28px;
+  width: fit-content;
+}
+.period-selector button {
+  min-height: 34px;
+  font-size: 11px;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 5px;
+  color: #52634f;
+  font-weight: 500;
+}
+.period-selector button[aria-pressed="true"] {
+  background: #e5efdf;
+  color: #254b31;
+}
+.commitment-list {
+  margin-top: 14px;
+}
+.commitment {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 19px 0;
+  border-bottom: 1px solid #e4eade;
+}
+.commitment > div strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 500;
+}
+.commitment > div span {
+  display: block;
+  font-size: 11px;
+  color: #63735f;
+  margin-top: 3px;
+}
+.commitment-amount {
+  font-size: 15px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.commitment-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  padding: 22px 0 4px;
+}
+.commitment-total > span {
+  max-width: 160px;
+  font-size: 12px;
+  color: #405b3e;
+}
+.commitment-total > strong {
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+  color: #245834;
+  font-variant-numeric: tabular-nums;
+}
+.concept-body .concept-note {
+  font-size: 10px;
+  margin-top: 18px;
+  color: #5b6a58;
+  max-width: 420px;
+}
+.unusual-demo {
+  grid-column: 1/-1;
+}
+.unusual-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  padding: 34px 32px;
+}
+.signal-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 26px;
+}
+.signal-selector button {
+  min-height: 36px;
+  font-size: 11px;
+  padding: 8px 12px;
+  font-weight: 500;
+  border-color: #cad8c2;
+}
+.signal-selector button[aria-pressed="true"] {
+  background: #e6efdf;
+  color: #245333;
+  border-color: #9ab38d;
+}
+.unusual-example {
+  background: #f2f6ed;
+  border-radius: 8px;
+  border: 1px solid #d6e2cd;
+  padding: 26px;
+  display: flex;
+  align-items: center;
+}
+.signal-content {
+  width: 100%;
+  animation: context-appear 0.22s ease;
+}
+.signal-label {
+  font-size: 10px;
+  color: #5e6b55;
+}
+.signal-transaction {
+  display: flex;
+  justify-content: space-between;
+  gap: 22px;
+  align-items: center;
+  margin-top: 18px;
+}
+.signal-transaction h4 {
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+.signal-transaction strong {
+  font-size: 18px;
+  font-weight: 500;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.signal-content p {
+  font-size: 12px;
+  margin-top: 18px;
+  max-width: 500px;
+}
+.signal-content .signal-reason {
+  font-size: 13px;
+  color: #365735;
+}
+.unusual-footnote {
+  border-top: 1px solid #e1e9db;
+  padding: 13px 32px;
+  font-size: 10px;
+  color: #586d53;
+}
+.history-horizon {
+  margin-top: 48px;
+  padding-top: 4px;
+}
+.history-horizon h3 {
+  font-size: 24px;
+}
+.history-horizon p {
+  max-width: 340px;
+  font-size: 13px;
+}
+.trust-section {
+  padding: 76px 48px;
+  gap: 100px;
+}
+.trust-section > div > p {
+  max-width: 420px;
+}
+.trust-section dl {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3px;
+}
+.trust-section dd {
+  max-width: 520px;
+  font-size: 13px;
+}
+.closing-section {
+  max-width: 1664px;
+  margin-inline: auto;
+  padding: 56px 0;
+}
+.marketing-footer {
+  max-width: 1760px;
+  padding: 36px 48px;
+}
+@keyframes context-appear {
+  from {
+    opacity: 0.4;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (min-width: 1600px) {
+  .spending-chart {
+    height: 236px;
+  }
+  .concept-body {
+    padding: 36px 40px;
+  }
+  .unusual-content {
+    padding: 40px;
+    gap: 60px;
+  }
+  .chart-bar {
+    max-height: 180px;
+  }
+  .recurring-demo {
+    margin-top: 40px;
+  }
+}
+@media (max-width: 1760px) {
+  .closing-section {
+    margin-inline: 48px;
+  }
+}
+@media (max-width: 1100px) {
+  .marketing-nav {
+    padding-inline: 32px;
+    gap: 32px;
+  }
+  .marketing-hero {
+    padding: 48px 32px 64px;
+    gap: 36px;
+  }
+  .hero-copy h1 {
+    font-size: 58px;
+  }
+  .hero-copy > p:not(.eyebrow) {
+    font-size: 15px;
+  }
+  .marketing .example-intro h2 {
+    font-size: 23px;
+  }
+  .marketing .activity-summary strong {
+    font-size: 13px;
+  }
+  .understand-section,
+  .trust-section {
+    padding: 60px 32px;
+  }
+  .process-layout {
+    gap: 48px;
+  }
+  .process-start {
+    padding: 30px;
+  }
+  .vision-section {
+    padding: 60px 32px;
+  }
+  .concept-body {
+    padding: 26px 24px;
+  }
+  .concept-caption {
+    padding: 12px 20px;
+    flex-wrap: wrap;
+    gap: 3px 10px;
+  }
+  .concept-caption > span:last-child {
+    text-align: left;
+  }
+  .spending-readout {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .baseline-readout {
+    text-align: left;
+  }
+  .baseline-readout > span {
+    display: inline !important;
+    margin-right: 10px;
+  }
+  .baseline-readout strong {
+    display: inline;
+  }
+  .chart-columns {
+    gap: 8px;
+  }
+  .commitment-total {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .commitment-total > span {
+    max-width: none;
+  }
+  .unusual-content {
+    gap: 28px;
+  }
+  .signal-transaction {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .closing-section {
+    margin-inline: 32px;
+  }
+}
+@media (max-width: 760px) {
+  .marketing-nav {
+    padding-inline: 22px;
+  }
+  .marketing-hero {
+    grid-template-columns: 1fr;
+    padding: 40px 24px 58px;
+    gap: 36px;
+  }
+  .hero-copy h1 {
+    font-size: clamp(48px, 8.8vw, 66px);
+  }
+  .marketing .product-example {
+    width: 100%;
+    max-width: 600px;
+    box-shadow: 8px 8px 0 #e1e9df;
+  }
+  .marketing .product-example figcaption {
+    padding: 10px 20px;
+    font-size: 10px;
+  }
+  .marketing .example-heading {
+    padding: 16px 20px;
+  }
+  .marketing .example-intro {
+    padding: 22px 20px 10px;
+  }
+  .marketing .example-intro h2 {
+    font-size: 23px;
+  }
+  .marketing .example-list {
+    padding: 6px 12px 12px;
+  }
+  .marketing .example-list button {
+    padding: 15px 8px;
+    min-height: 78px;
+  }
+  .marketing .activity-summary strong {
+    font-size: 13px;
+  }
+  .marketing .activity-summary span {
+    font-size: 10px;
+  }
+  .marketing .example-understanding {
+    padding: 18px 20px;
+  }
+  .marketing .example-footnote {
+    padding: 12px 20px;
+    font-size: 10px;
+  }
+  .marketing .understanding-note {
+    font-size: 9px;
+  }
+  .understand-section,
+  .trust-section {
+    padding: 50px 24px;
+  }
+  .process-layout {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  .process-start {
+    padding: 28px;
+  }
+  .process-start h3 {
+    font-size: 30px;
+  }
+  .process-steps h3 {
+    font-size: 19px;
+  }
+  .process-steps p {
+    font-size: 13px;
+  }
+  .vision-section {
+    padding: 50px 24px;
+  }
+  .vision-heading h2 {
+    font-size: 36px;
+  }
+  .intelligence-examples {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  .concept-body {
+    padding: 24px 20px;
+  }
+  .concept-caption {
+    padding: 11px 20px;
+    display: block;
+  }
+  .concept-caption > span {
+    display: block;
+  }
+  .concept-caption > span:last-child {
+    margin-top: 3px;
+  }
+  .concept-body h3,
+  .unusual-intro h3 {
+    font-size: 28px;
+  }
+  .spending-readout {
+    gap: 14px;
+  }
+  .baseline-readout > span {
+    display: block !important;
+  }
+  .spending-readout strong {
+    font-size: 30px;
+  }
+  .baseline-readout strong {
+    font-size: 17px;
+  }
+  .demo-takeaway {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .commitment-total {
+    flex-direction: row;
+    align-items: center;
+  }
+  .commitment-total > span {
+    max-width: 140px;
+  }
+  .commitment-total > strong {
+    font-size: 28px;
+  }
+  .unusual-content {
+    grid-template-columns: 1fr;
+    padding: 24px 20px;
+    gap: 24px;
+  }
+  .unusual-example {
+    padding: 22px;
+  }
+  .unusual-footnote {
+    padding: 14px 20px;
+  }
+  .history-horizon {
+    margin-top: 36px;
+    gap: 0;
+  }
+  .history-horizon h3 {
+    font-size: 22px;
+  }
+  .trust-section {
+    gap: 30px;
+  }
+  .closing-section {
+    margin-inline: 24px;
+    padding: 40px 0;
+  }
+  .marketing-footer {
+    padding: 28px 24px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marketing .understanding-result,
+  .chart-context,
+  .signal-content {
+    animation: none;
+  }
+  .chart-bar {
+    transition: none;
+  }
+}
+/* The chart has a 180px plot representing AED 0–900; month labels sit outside it. */
+.marketing .spending-chart {
+  height: 218px;
+}
+.chart-columns {
+  height: 180px;
+}
+.chart-month {
+  position: relative;
+  height: 180px;
+}
+.chart-bar {
+  position: absolute;
+  bottom: 0;
+  max-height: none;
+}
+.chart-value {
+  position: absolute;
+  bottom: calc(var(--bar-height) + 6px);
+  margin: 0;
+}
+.chart-month-name {
+  position: absolute;
+  top: calc(100% + 8px);
+  margin: 0;
+}
+.chart-baseline {
+  top: 76px;
+  bottom: auto;
+  height: 20px;
+}
+.chart-month[aria-pressed="true"] .chart-bar {
+  animation: bar-select 0.28s ease-out;
+}
+@keyframes bar-select {
+  from {
+    transform: scaleX(1.08) scaleY(0.96);
+  }
+  to {
+    transform: scaleX(1.08) scaleY(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chart-month[aria-pressed="true"] .chart-bar {
+    animation: none;
+  }
+}
+.chart-baseline > span {
+  left: 0;
+  right: auto;
+  top: -23px;
+}
