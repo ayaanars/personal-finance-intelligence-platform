@@ -3,6 +3,7 @@ import "@fontsource-variable/geist";
 import "./globals.css";
 import "./public.css";
 import "./overview.css";
+import "./private.css";
 import { SessionProvider } from "@/components/session";
 
 export const metadata: Metadata = {

@@ -20,3 +20,7 @@ a dedicated database, never SQLite. Every bug fix needs a focused regression tes
 Before business features, record their required ADRs and implement their authorization,
 accounting, concurrency, error, and test requirements together. No placeholder security
 or financial behavior is acceptable. Update `docs/STATUS.md` with actual check evidence.
+
+Private experience changes must preserve the shared Protected layout, session-scoped
+period selection, decimal-string presentation, chart gaps and disclosed historical
+coverage limits. See `docs/architecture/private-intelligence-experience.md`.

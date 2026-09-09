@@ -176,3 +176,9 @@ six-month window; the intelligence endpoint uses seven. Baselines use 3-6 prior
 months; likely recurring patterns require three consecutive monthly charges.
 Budgets, forecasts, risk/ML, essential/discretionary classifications and LLM insights
 remain deferred.
+
+## Phase 13 private experience
+
+The private workspace separates Overview, Insights, Trends, Recurring and Behaviour
+from Transactions and Import. It reuses Phase 12 analytics with currency-specific
+selectors, evidence and interactive history. See [experience architecture](docs/architecture/private-intelligence-experience.md) and local `docs/STATUS.md` for verification.

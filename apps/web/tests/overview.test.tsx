@@ -1,47 +1,14 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, it, vi } from "vitest";
-import { Overview } from "@/features/overview";
+import { IntelligencePage, Overview } from "@/features/overview";
+import { RecurringCommitments, YourNormal } from "@/features/overview-history";
 import { Shell } from "@/components/shell";
 import { api, ApiError } from "@/lib/api";
 import { intelligenceSchema as overviewSchema, type IntelligenceData as OverviewData } from "@/lib/analytics";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: vi.fn() }), usePathname: () => "/app" }));
-const totals = {
-  income: "2000.0000", inflows: "2025.0000", other_inflows: "25.0000", outflow: "500.0000",
-  net_cash_flow: "1525.0000", spending: "250.0000", cash_out: "50.0000", transfers_out: "200.0000", transaction_count: 5,
-};
-const data: OverviewData = {
-  month: "2026-09", available_months: ["2026-09", "2026-08"], window_start: "2026-04",
-  methodology_version: "intelligence-v1", intelligence_version: "longitudinal-v1", coverage_note: "Based on imported activity; months may be partial.",
-  currencies: [{
-    currency: "AED", totals, observed_start: "2026-09-01", observed_end: "2026-09-05",
-    baselines: { prior_months: [], observed_months: 2, categories: [], method: "Three prior months required.",
-      metrics: ["Spending", "Outflow", "Income"].map((name) => ({
-        name, kind: "metric" as const, state: "insufficient_history" as const, current: "250.0000",
-        mean: null, low: null, high: null, average_three: null, average_six: null, delta: null,
-        relative_percent: null, position: null, current_scale: null, low_scale: null, high_scale: null,
-        mean_scale: null, months: [], values: [],
-      })),
-    },
-    recurring: {state: "insufficient_history", payments: [], candidates: [], monthly_estimate: "0.0000", annual_estimate: "0.0000", matched_spending: "0.0000", other_spending: "250.0000", matched_share_percent: "0.00", method: "Likely patterns, not confirmed subscriptions."},
-    behaviour: {
-      spending_count: 1, average_purchase: "250.0000", active_spending_days: 1,
-      weekday_weekend: ["Monday-Friday", "Saturday-Sunday"].map((name) => ({ name, amount: "0.0000", transaction_count: 0, share_percent: null })),
-      month_parts: ["Days 1-10", "Days 11-20", "Days 21-31"].map((name) => ({ name, amount: "0.0000", transaction_count: 0, share_percent: null })),
-      top_spending_merchants: [], top_five_category_share: "100.00", top_five_merchant_share: "100.00",
-      largest_purchases: [], merchant_changes: [], newly_observed_merchants: [],
-      return_inflows: "25.0000", transfer_inflows: "0.0000",
-    },
-    categories: [{ name: "Groceries", amount: "250.0000", transaction_count: 1, share_percent: "100.00" }],
-    top_merchants: [{ name: "Carrefour", amount: "250.0000", transaction_count: 1, share_percent: "50.00" }],
-    comparison: { state: "available", previous_month: "2026-08", metrics: [
-      { name: "outflow", current: "500.0000", previous: "100.0000", delta: "400.0000", percent: "400.00", scale_percent: "0.00" },
-    ], categories: [] },
-    insights: [{ code: "outflow_change", metric: "outflow", subject: null, current: "500.0000", previous: "100.0000", delta: "400.0000", total_delta: null, contribution_percent: null, text: "Outflow increased by AED 400.0000 compared with 2026-08." }],
-    trend: [{ month: "2026-08", totals: { ...totals, spending: "100.0000" }, spending_scale_percent: "40.00", income_scale_percent: "100.00", outflow_scale_percent: "100.00" }, { month: "2026-09", totals, spending_scale_percent: "100.00", income_scale_percent: "100.00", outflow_scale_percent: "100.00" }],
-  }],
-};
+import { data } from "./intelligence-fixture";
 
 it("renders API analytics, calculation evidence and private navigation", async () => {
   vi.spyOn(api, "intelligence").mockResolvedValue(data);
@@ -50,8 +17,9 @@ it("renders API analytics, calculation evidence and private navigation", async (
   expect(screen.getByText(data.currencies[0].insights[0].text)).toBeInTheDocument();
   await userEvent.click(screen.getByText("See the calculation"));
   expect(screen.getByText(/Selected month: 500.00 AED/)).toBeVisible();
-  expect(screen.getByText("Groceries")).toBeInTheDocument();
-  expect(screen.getByText("Carrefour")).toBeInTheDocument();
+  expect(screen.getByRole("link", {name: "Trends"})).toHaveAttribute("href", "/app/trends");
+  expect(screen.getByRole("link", {name: "Behaviour"})).toHaveAttribute("href", "/app/behaviour");
+  expect(screen.queryByText("The rhythm of your spending")).not.toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Overview" })).toHaveAttribute("aria-current", "page");
   expect(screen.getByRole("link", { name: "Transactions" })).toHaveAttribute("href", "/app/transactions");
   expect(screen.getByRole("link", { name: "Import statement" })).toHaveAttribute("href", "/app/import");
@@ -106,7 +74,7 @@ it("shows a safe API error and retries", async () => {
 
 it("validates exact API strings and uses the authenticated no-store transport", async () => {
   expect(overviewSchema.safeParse(data).success).toBe(true);
-  expect(overviewSchema.safeParse({ ...data, currencies: [{ ...data.currencies[0], totals: { ...totals, income: 2000 } }] }).success).toBe(false);
+  expect(overviewSchema.safeParse({ ...data, currencies: [{ ...data.currencies[0], totals: { ...data.currencies[0].totals, income: 2000 } }] }).success).toBe(false);
   const fetcher = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(data)));
   await api.intelligence("2026-08");
   expect(fetcher).toHaveBeenCalledWith("/api/v1/analytics/intelligence?month=2026-08", expect.objectContaining({ credentials: "same-origin", cache: "no-store" }));
@@ -114,7 +82,7 @@ it("validates exact API strings and uses the authenticated no-store transport", 
 
 it("switches date patterns and progressively discloses purchase detail", async () => {
   vi.spyOn(api, "intelligence").mockResolvedValue(data);
-  render(<Overview />);
+  render(<IntelligencePage page="behaviour" />);
   await screen.findByRole("heading", { name: "The rhythm of your spending" });
   expect(screen.getByText("Saturday-Sunday")).toBeVisible();
   await userEvent.click(screen.getByRole("button", { name: "Within the month" }));
@@ -158,7 +126,7 @@ it("renders baseline bands and recurring evidence with actual versus estimated s
     evidence: ["06", "07", "08"].map((month) => ({identifier: `00000000-0000-4000-8000-0000000000${month}`, day: `2026-${month}-05`, amount: "49.0000"})),
   }] };
   vi.spyOn(api, "intelligence").mockResolvedValue({ ...data, currencies: [currency] });
-  render(<Overview />);
+  render(<><YourNormal data={currency}/><RecurringCommitments data={currency}/></>);
   expect(await screen.findByText("Above the observed range")).toBeVisible();
   await userEvent.click(screen.getByText("Why this looks recurring"));
   expect(screen.getByText("Three monthly charges within 5%.")).toBeVisible();

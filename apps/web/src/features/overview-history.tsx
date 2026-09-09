@@ -56,9 +56,9 @@ export function YourNormal({ data }: { data: IntelligenceCurrency }) {
         <dl>
           <div><dt>Recent mean</dt><dd>{row.mean ? amount(row.mean, data.currency) : "Insufficient history"}</dd></div>
           <div><dt>3-month average</dt><dd>{row.average_three ? amount(row.average_three, data.currency) : "Insufficient history"}</dd></div>
-          <div><dt>6-month average</dt><dd>{row.average_six ? amount(row.average_six, data.currency) : "Needs six reference months"}</dd></div>
+          <div><dt>6-month average</dt><dd>{row.average_six ? amount(row.average_six, data.currency) : "Insufficient history"}</dd></div>
         </dl>
-        <p>{report.method}</p>
+        <details><summary>Baseline methodology</summary><p>{report.method}</p></details>
       </aside>
     </div>
   </section>;
@@ -75,7 +75,7 @@ export function RecurringCommitments({ data }: { data: IntelligenceCurrency }) {
   const [expanded, setExpanded] = useState(false);
   const r = data.recurring;
   return <section className="recurring-section" aria-labelledby="recurring-title">
-    <h2 id="recurring-title">Recurring commitments</h2><p>Likely monthly patterns, with the evidence behind each one.</p>
+    <h2 id="recurring-title">Recurring commitments</h2><p>Recognizable patterns. Transparent estimates. See the charges behind each pattern.</p>
     {r.state === "likely_recurring" ? <div className="recurring-grid">
       <div className="recurring-totals">
         <span>Estimated monthly pattern</span><strong>{amount(r.monthly_estimate, data.currency)}</strong>
@@ -91,6 +91,7 @@ export function RecurringCommitments({ data }: { data: IntelligenceCurrency }) {
       </div>
       <div><ol className="recurring-list">{r.payments.slice(0, expanded ? undefined : 5).map((payment) => <li key={payment.merchant}>
         <div className="recurring-payment-heading"><h3>{payment.merchant}</h3><strong>{amount(payment.typical_amount, data.currency)}<small> / month</small></strong></div>
+        <p className="cadence-label">Monthly cadence · {payment.evidence.length} observed charge months · {payment.evidence.every(e => e.amount === payment.evidence[0].amount) ? "Same observed amount" : "Varying observed amounts"}</p>
         {payment.newly_qualified && <p className="new-pattern">Newly qualified this month</p>}
         <div className="composition-bar" aria-hidden="true" style={{width:`${payment.share_percent ?? "0"}%`}} />
         <details><summary>Why this looks recurring</summary><p>{payment.reason}</p>
@@ -107,7 +108,7 @@ export function RecurringCommitments({ data }: { data: IntelligenceCurrency }) {
     {r.candidates.length > 0 && <details className="recurring-candidates"><summary>Insufficient evidence: {r.candidates.length} merchant {r.candidates.length === 1 ? "example" : "examples"}</summary>
       <ul>{r.candidates.map((candidate) => <li key={candidate.merchant}><strong>{candidate.merchant}</strong><p>{reasons[candidate.reason]}</p></li>)}</ul>
     </details>}
-    <p className="overview-note">{r.method}</p>
+    <details className="recurring-method"><summary>How recurring patterns are identified</summary><p>{r.method}</p></details>
   </section>;
 }
 

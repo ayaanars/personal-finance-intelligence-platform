@@ -9,8 +9,9 @@ const amount = (value: string, currency: string) => displayMoney(value, currency
 
 export function BehaviourStory({ data }: { data: IntelligenceCurrency }) {
   const [pattern, setPattern] = useState<"week" | "month">("week");
-  const [view, setView] = useState<"merchants" | "purchases" | "new">("merchants");
+  const [view, setView] = useState<"merchants" | "categories" | "purchases" | "new">("merchants");
   const b = data.behaviour;
+  const changes = view === "categories" ? data.comparison.categories : b.merchant_changes;
   const patterns = pattern === "week" ? b.weekday_weekend : b.month_parts;
   return <>
     <section className="behaviour-section" aria-labelledby="behaviour-title">
@@ -41,12 +42,13 @@ export function BehaviourStory({ data }: { data: IntelligenceCurrency }) {
       <h2 id="explore-title">A closer look at purchases</h2>
       <div className="segmented" role="group" aria-label="Purchase detail">
         <button aria-pressed={view === "merchants"} onClick={() => setView("merchants")}>Merchant momentum</button>
+        <button aria-pressed={view === "categories"} onClick={() => setView("categories")}>Category momentum</button>
         <button aria-pressed={view === "purchases"} onClick={() => setView("purchases")}>Largest purchases</button>
         <button aria-pressed={view === "new"} onClick={() => setView("new")}>Newly observed</button>
       </div>
-      {view === "merchants" ? <>
+      {view === "merchants" || view === "categories" ? <>
         <p className="section-intro">Spending changes vs the immediately previous month. Merchant and category views overlap.</p>
-        {b.merchant_changes.length ? <ol className="momentum-list">{b.merchant_changes.map((row) => <li key={row.name}>
+        {changes.length ? <ol className="momentum-list">{changes.map((row) => <li key={row.name}>
           <div><strong>{row.name}</strong><span>{displayMoney(row.delta, data.currency)}</span></div>
           <div className={`driver-bar ${row.delta.startsWith("-") ? "decrease" : "increase"}`} aria-hidden="true" style={{ width: `${row.scale_percent}%` }} />
           <span>{amount(row.previous, data.currency)} → {amount(row.current, data.currency)}</span>
