@@ -1,4 +1,5 @@
 "use client";
+import { dateLabel } from "@/lib/dates";
 
 import Link from "next/link";
 import { useState } from "react";
@@ -54,7 +55,7 @@ export function BehaviourStory({ data }: { data: IntelligenceCurrency }) {
           <span>{amount(row.previous, data.currency)} → {amount(row.current, data.currency)}</span>
         </li>)}</ol> : <p className="history-message">Merchant momentum needs activity in both months.</p>}
       </> : view === "purchases" ? <ol className="purchase-list">{b.largest_purchases.length ? b.largest_purchases.map((row) => <li key={row.identifier}>
-        <div><Link href={`/app/transactions/${row.identifier}`}>{row.merchant ?? "Unknown merchant"}</Link><p>{row.day} · {row.category}</p></div><strong>{amount(row.amount, data.currency)}</strong>
+        <div><Link href={`/app/transactions/${row.identifier}`}>{row.merchant ?? "Unknown merchant"}</Link><p>{dateLabel(row.day)} · {row.category}</p></div><strong>{amount(row.amount, data.currency)}</strong>
       </li>) : <li>No purchases in this month.</li>}</ol> : <>
         <p className="section-intro">Known merchants appearing this month but absent from earlier imported activity in this window. This does not establish a first-ever purchase.</p>
         <ol className="purchase-list">{b.newly_observed_merchants.length ? b.newly_observed_merchants.map((row) => <li key={row.name}><strong>{row.name}</strong><span>{amount(row.amount, data.currency)}</span></li>) : <li>No newly observed merchants supported by this history.</li>}</ol>

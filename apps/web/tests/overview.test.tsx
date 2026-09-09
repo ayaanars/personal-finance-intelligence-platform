@@ -14,7 +14,7 @@ it("renders API analytics, calculation evidence and private navigation", async (
   vi.spyOn(api, "intelligence").mockResolvedValue(data);
   render(<Shell><Overview /></Shell>);
   expect(await screen.findByText("1,525.00 AED")).toBeInTheDocument();
-  expect(screen.getByText(data.currencies[0].insights[0].text)).toBeInTheDocument();
+  expect(screen.getByText("Outflow increased by AED 400.0000 compared with August 2026.")).toBeInTheDocument();
   await userEvent.click(screen.getByText("See the calculation"));
   expect(screen.getByText(/Selected month: 500.00 AED/)).toBeVisible();
   expect(screen.getByRole("link", {name: "Trends"})).toHaveAttribute("href", "/app/trends");
@@ -130,7 +130,7 @@ it("renders baseline bands and recurring evidence with actual versus estimated s
   expect(await screen.findByText("Above the observed range")).toBeVisible();
   await userEvent.click(screen.getByText("Why this looks recurring"));
   expect(screen.getByText("Three monthly charges within 5%.")).toBeVisible();
-  expect(screen.getByRole("link", {name: "2026-07-05"})).toHaveAttribute("href", "/app/transactions/00000000-0000-4000-8000-000000000007");
+  expect(screen.getByRole("link", {name: "5 July 2026"})).toHaveAttribute("href", "/app/transactions/00000000-0000-4000-8000-000000000007");
   expect(screen.getByText("Newly qualified this month")).toBeVisible();
   expect(screen.getByText("Matched charges")).toBeVisible();
   await userEvent.selectOptions(screen.getByLabelText("Compare with your history"), "metric:Income");

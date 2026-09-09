@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { UnusualActivity } from "./unusual";
 import { useEffect, useState } from "react";
 import { api, displayMoney, errorMessage } from "@/lib/api";
 import type { IntelligenceCurrency, IntelligenceData } from "@/lib/analytics";
@@ -37,7 +38,7 @@ export function IntelligencePage({ page }: {
    <div className="period-strip"><span>{data.month ? monthLabel(data.month) : "Imported activity"} <small> / {c.totals.transaction_count} transactions</small></span><div className="currency-picker" role="group" aria-label="Currency">{data.currencies.map(item => <button key={item.currency} aria-pressed={item.currency === c.currency} onClick={() => setCurrency(item.currency)}>{item.currency}</button>)}</div></div>
    <div className="intelligence-content" key={`${data.month}-${c.currency}-${page}`}>
     {c.comparison.state === "no_activity" && <p className="notice" role="status">No {c.currency} activity in the selected month. Earlier observations are shown without a current comparison.</p>}
-    {page === "overview" ? <ExecutiveStory data={c}/> : page === "insights" ? <><InsightFeed data={c}/><ChangeHero data={c} expanded/></> : page === "trends" ? <><TrendsExplorer data={c} month={data.month!}/><YourNormal data={c}/></> : page === "recurring" ? <RecurringCommitments data={c}/> : <><BehaviourStory data={c}/><Composition data={c}/></>}
+    {page === "overview" ? <><UnusualActivity compact selectedMonth={data.month ?? undefined} selectedCurrency={c.currency}/><ExecutiveStory data={c}/></> : page === "insights" ? <><InsightFeed data={c}/><ChangeHero data={c} expanded/></> : page === "trends" ? <><TrendsExplorer data={c} month={data.month!}/><YourNormal data={c}/></> : page === "recurring" ? <RecurringCommitments data={c}/> : <><BehaviourStory data={c}/><Composition data={c}/></>}
    </div>
    <details className="method-disclosure"><summary>About this history · {c.baselines.observed_months} observed {c.baselines.observed_months === 1 ? "month" : "months"} · {c.currency} only</summary><p>{data.coverage_note}</p><p>Currencies are never combined or converted. Spending excludes Transfers and Cash / ATM; positive returns do not reduce gross spending. This is imported activity, not an account balance.</p><Link href="/app/import">Build your history</Link></details>
   </> : <section className="overview-empty"><h2>{data?.available_months.length ? "No imported activity in this window" : "Import your first statement to begin."}</h2><p>One month reveals where your money went. More history reveals what changes.</p><Link className="button primary" href="/app/import">Import statement</Link></section>}

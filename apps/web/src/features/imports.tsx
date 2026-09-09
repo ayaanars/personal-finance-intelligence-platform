@@ -1,4 +1,5 @@
 "use client";
+import { dateLabel } from "@/lib/dates";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -293,8 +294,8 @@ export function PreviewStatement({ id }: { id: string }) {
           </div>
           {preview.period_start && (
             <p className="hint">
-              Valid-row date range: {preview.period_start} to{" "}
-              {preview.period_end}. This is observed coverage, not a certified
+              Valid-row date range: {dateLabel(preview.period_start)} to{" "}
+              {dateLabel(preview.period_end)}. This is observed coverage, not a certified
               statement period.
             </p>
           )}
@@ -345,7 +346,7 @@ export function PreviewStatement({ id }: { id: string }) {
                       <tr key={row.source_row_number}>
                         <td>{row.source_row_number}</td>
                         <td>
-                          {row.transaction_date ?? "Unavailable"}
+                          {dateLabel(row.transaction_date)}
                           <span className="description">
                             {row.description ??
                               "Invalid row content is not retained"}

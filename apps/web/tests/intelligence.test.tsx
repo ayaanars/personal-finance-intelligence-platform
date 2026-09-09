@@ -60,7 +60,7 @@ it("reports historical fetch failures and retries instead of plotting partial to
 it("keeps dedicated Insights and Recurring pages meaningful with insufficient history", async () => {
     vi.spyOn(api, 'intelligence').mockResolvedValue(data);
     const view = render(<IntelligencePage page="insights"/>);
-    expect(await screen.findByText(data.currencies[0].insights[0].text)).toBeVisible();
+    expect(await screen.findByText("Outflow increased by AED 400.0000 compared with August 2026.")).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'The rhythm of your spending' })).not.toBeInTheDocument();
     view.rerender(<IntelligencePage key="recurring" page="recurring"/>);
     expect(await screen.findByText('More history unlocks recurring patterns')).toBeVisible();

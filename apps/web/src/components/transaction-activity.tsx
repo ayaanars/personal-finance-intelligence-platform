@@ -1,4 +1,5 @@
 import { displayMoney } from "@/lib/api";
+import { dateLabel } from "@/lib/dates";
 
 export type Activity = {
   merchant: string | null;
@@ -20,7 +21,7 @@ export function ActivitySummary({ activity }: { activity: Activity }) {
       <div className="activity-value">
         <strong>{displayMoney(activity.amount, activity.currency)}</strong>
         <span>
-          {activity.transaction_date} ·{" "}
+          {dateLabel(activity.transaction_date)} ·{" "}
           {activity.amount.startsWith("-") ? "Outflow" : "Inflow"}
         </span>
       </div>

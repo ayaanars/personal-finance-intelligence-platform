@@ -174,11 +174,20 @@ See [ADR 0007](docs/adr/0007-financial-intelligence.md) for income, transfer, re
 currency and comparison semantics. The legacy `/analytics/overview` retains its
 six-month window; the intelligence endpoint uses seven. Baselines use 3-6 prior
 months; likely recurring patterns require three consecutive monthly charges.
-Budgets, forecasts, risk/ML, essential/discretionary classifications and LLM insights
-remain deferred.
+Budgets, forecasts, essential/discretionary classifications and LLM insights
+remain deferred. Phase 14 adds advisory unusual-activity rules and contained ML support.
 
 ## Phase 13 private experience
 
 The private workspace separates Overview, Insights, Trends, Recurring and Behaviour
 from Transactions and Import. It reuses Phase 12 analytics with currency-specific
 selectors, evidence and interactive history. See [experience architecture](docs/architecture/private-intelligence-experience.md) and local `docs/STATUS.md` for verification.
+
+## Phase 14 unusual activity
+
+`/app/unusual` ranks explained deviations from personal history. A compact Overview
+summary links to it. `GET /api/v1/analytics/unusual` reuses Phase 12 reference months,
+separates currencies and returns Notable/High evidence. Isolation Forest activates
+at 100 prior purchases over three consecutive months; rules remain authoritative.
+See [ADR 0010](docs/adr/0010-unusual-activity.md) for thresholds and limitations.
+Private date labels are human-readable; API and stored dates retain ISO formats.

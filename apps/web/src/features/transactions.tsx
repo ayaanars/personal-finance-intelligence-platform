@@ -1,4 +1,5 @@
 "use client";
+import { dateLabel } from "@/lib/dates";
 import Link from "next/link";
 import { ActivitySummary } from "@/components/transaction-activity";
 import { useEffect, useState } from "react";
@@ -132,7 +133,7 @@ export function TransactionHistory() {
                           {item.raw_description}
                         </span>
                       </td>
-                      <td className="nowrap">{item.transaction_date}</td>
+                      <td className="nowrap">{dateLabel(item.transaction_date)}</td>
                       <td>
                         <span className="category">{item.category}</span>
                         {item.categorization_source === "manual" && (
@@ -261,7 +262,7 @@ export function TransactionDetail({ id }: { id: string }) {
                 {item.merchant ?? item.normalized_description}
               </h1>
               <p>
-                {item.transaction_date} ·{" "}
+                {dateLabel(item.transaction_date)} ·{" "}
                 {item.amount.startsWith("-") ? "Outflow" : "Inflow"}
               </p>
             </div>

@@ -44,7 +44,9 @@ class IntelligenceOverview(BaseModel):
     )
 
 
-def intelligence(db: Session, principal: Principal, month: str | None) -> IntelligenceOverview:
+def load_history(
+    db: Session, principal: Principal, month: str | None
+) -> tuple[str | None, list[str], dict[str, list[Observation]]]:
     owned = owned_query(principal)
     period = func.to_char(Fact.transaction_date, "YYYY-MM")
     available = list(
@@ -52,9 +54,7 @@ def intelligence(db: Session, principal: Principal, month: str | None) -> Intell
     )
     selected_text = month or (available[0] if available else None)
     if selected_text is None:
-        return IntelligenceOverview(
-            month=None, available_months=[], window_start=None, currencies=[]
-        )
+        return None, [], {}
     selected = date.fromisoformat(selected_text + "-01")
     start = shift_month(selected, -6)
     end = date(selected.year, selected.month, calendar.monthrange(selected.year, selected.month)[1])
@@ -83,6 +83,17 @@ def intelligence(db: Session, principal: Principal, month: str | None) -> Intell
                 rule.startswith("return_"),
             )
         )
+    return selected_text, available, observations
+
+
+def intelligence(db: Session, principal: Principal, month: str | None) -> IntelligenceOverview:
+    selected_text, available, observations = load_history(db, principal, month)
+    if selected_text is None:
+        return IntelligenceOverview(
+            month=None, available_months=[], window_start=None, currencies=[]
+        )
+    selected = date.fromisoformat(selected_text + "-01")
+    start = shift_month(selected, -6)
     # A single streaming owner-scoped read supplies summaries and date-level views.
     summaries = build_currencies(
         (

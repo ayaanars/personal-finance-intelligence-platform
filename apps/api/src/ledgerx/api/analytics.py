@@ -8,6 +8,7 @@ from ledgerx.api.auth_security import Authenticated
 from ledgerx.modules.analytics.intelligence_service import IntelligenceOverview, intelligence
 from ledgerx.modules.analytics.schemas import Overview
 from ledgerx.modules.analytics.service import overview
+from ledgerx.modules.analytics.unusual import UnusualReport, unusual
 
 router = APIRouter(prefix="/api/v1/analytics", tags=["analytics"])
 
@@ -34,3 +35,8 @@ def get_intelligence(
     context: Authenticated, query: Annotated[OverviewQuery, Query()]
 ) -> IntelligenceOverview:
     return intelligence(context.db, context.principal, query.month)
+
+
+@router.get("/unusual")
+def get_unusual(context: Authenticated, query: Annotated[OverviewQuery, Query()]) -> UnusualReport:
+    return unusual(context.db, context.principal, query.month)

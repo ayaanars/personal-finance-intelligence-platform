@@ -25,7 +25,7 @@ export function Shell({ children }: {
     finally {
         setBusy(false);
     } }
-    const links = [["/app", "Overview", "◈"], ["/app/insights", "Insights", "✦"], ["/app/trends", "Trends", "↗"], ["/app/recurring", "Recurring", "↻"], ["/app/behaviour", "Behaviour", "≋"], ["/app/transactions", "Transactions", "☷"], ["/app/import", "Import statement", "+"]];
+    const links = [["/app", "Overview", "◈"], ["/app/unusual", "Unusual activity", "◇"], ["/app/insights", "Insights", "✦"], ["/app/trends", "Trends", "↗"], ["/app/recurring", "Recurring", "↻"], ["/app/behaviour", "Behaviour", "≋"], ["/app/transactions", "Transactions", "☷"], ["/app/import", "Import statement", "+"]];
     const current = links.find(([href]) => href === "/app" ? pathname === href : pathname.startsWith(href))?.[1] ?? "Workspace";
     return <div className="private-app">
   <a className="skip" href="#content">Skip to content</a>

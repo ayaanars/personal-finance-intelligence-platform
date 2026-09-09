@@ -2,7 +2,8 @@
 import { useId, useState } from "react";
 import { displayMoney } from "@/lib/api";
 export const amount = (value: string, currency: string) => displayMoney(value, currency).replace(/^\+/, "");
-export function monthLabel(month: string) { const [year, m] = month.split("-"); return `${["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][Number(m) - 1]} ${year}`; }
+import { monthLabel } from "@/lib/dates";
+export { monthLabel } from "@/lib/dates";
 export type PlotPoint = {
     month: string;
     value: string | null;

@@ -1,4 +1,5 @@
 "use client";
+import { monthLabel, dateLabel } from "@/lib/dates";
 
 import Link from "next/link";
 import { useState } from "react";
@@ -29,7 +30,7 @@ function BaselineBand({ row, currency }: { row: BaselineData; currency: string }
     <p className="baseline-delta">{displayMoney(row.delta!, currency)} vs the recent mean{row.relative_percent !== null ? ` (${row.relative_percent}%)` : ""}</p>
     <details className="baseline-evidence"><summary>How {row.name.toLowerCase()} compares</summary>
       <p>Recent mean {amount(row.mean!, currency)}. The selected month is excluded; missing calendar months break the reference run.</p>
-      <dl>{row.months.map((month, index) => <div key={month}><dt>{month}</dt><dd>{amount(row.values[index], currency)}</dd></div>)}</dl>
+      <dl>{row.months.map((month, index) => <div key={monthLabel(month)}><dt>{monthLabel(month)}</dt><dd>{amount(row.values[index], currency)}</dd></div>)}</dl>
       <p>Category totals absent from an otherwise observed month are zero imported spending, not proof of no spending. This month may be partial.</p>
     </details>
   </>;
@@ -95,7 +96,7 @@ export function RecurringCommitments({ data }: { data: IntelligenceCurrency }) {
         {payment.newly_qualified && <p className="new-pattern">Newly qualified this month</p>}
         <div className="composition-bar" aria-hidden="true" style={{width:`${payment.share_percent ?? "0"}%`}} />
         <details><summary>Why this looks recurring</summary><p>{payment.reason}</p>
-          <ol className="recurring-evidence">{payment.evidence.map((entry) => <li key={entry.identifier}><Link href={`/app/transactions/${entry.identifier}`}>{entry.day}</Link><strong>{amount(entry.amount, data.currency)}</strong></li>)}</ol>
+          <ol className="recurring-evidence">{payment.evidence.map((entry) => <li key={entry.identifier}><Link href={`/app/transactions/${entry.identifier}`}>{dateLabel(entry.day)}</Link><strong>{amount(entry.amount, data.currency)}</strong></li>)}</ol>
           <p>Median observed charge × 12 = {amount(payment.annual_estimate, data.currency)}. {payment.newly_qualified === null ? "More earlier history is needed to know when this pattern first qualified." : "Newly qualified means the previous rolling window did not meet these rules; it does not mean a new subscription."}</p>
         </details>
       </li>)}</ol>

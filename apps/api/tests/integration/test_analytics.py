@@ -193,3 +193,67 @@ def test_baselines_and_recurring_are_currency_specific_and_respect_corrections(
     assert revised[0]["recurring"]["payments"] == []
     assert revised[0]["baselines"]["metrics"][0]["position"] == "below"
     assert revised[1] == usd
+
+
+def test_unusual_ml_owner_currency_and_corrected_fact_isolation(auth: Harness) -> None:
+    endpoint = "/api/v1/analytics/unusual"
+    assert auth.client.get(endpoint).status_code == 401
+    headers = setup(auth)
+    lines = [
+        f"2026-{m:02d}-{i % 28 + 1:02d},Carrefour,-{10 + i},AED\n"
+        for m in (6, 7, 8)
+        for i in range(40)
+    ]
+    lines += ["2026-09-05,Amazon,-1000,AED\n", "2026-09-05,Amazon,-1000,USD\n"]
+    batch = upload(auth, headers, HEADER + "".join(lines).encode())
+    assert auth.client.get(endpoint).json()["currencies"] == []
+    assert (
+        auth.client.post(
+            f"{BASE}/{batch}/finalize", json={}, headers=finalize_headers(headers)
+        ).status_code
+        == 200
+    )
+    response = auth.client.get(endpoint)
+    assert response.status_code == 200 and response.headers["cache-control"] == "no-store"
+    original = response.json()
+    aed, usd = original["currencies"]
+    assert aed["ml_state"] == "active" and aed["historical_purchases"] == 120
+    assert usd["ml_state"] == "insufficient_history" and usd["items"] == []
+    identifier = next(
+        i["transaction_ids"][0]
+        for i in aed["items"]
+        if any(e["code"] == "large_purchase" for e in i["evidence"])
+    )
+    assert auth.client.get(endpoint, params={"user_id": str(uuid4())}).status_code == 422
+    assert auth.client.get(endpoint, params={"month": "0000-01"}).status_code == 422
+    for month in ("0001-01", "9999-12"):
+        assert auth.client.get(endpoint, params={"month": month}).status_code == 200
+    # A different owner's model/history cannot affect this owner's fitted result.
+    first_session = str(auth.client.cookies["ledgerx_session"])
+    auth.register("unusual-other@example.com")
+    auth.login("unusual-other@example.com")
+    assert auth.client.get(endpoint).json()["currencies"] == []
+    assert auth.client.get(f"/api/v1/transactions/{identifier}").status_code == 404
+    other_headers = {**headers, "X-CSRF-Token": auth.csrf(), "Idempotency-Key": str(uuid4())}
+    other_batch = upload(
+        auth, other_headers, HEADER + "".join(lines).replace("-1000", "-2").encode()
+    )
+    assert (
+        auth.client.post(
+            f"{BASE}/{other_batch}/finalize", json={}, headers=finalize_headers(other_headers)
+        ).status_code
+        == 200
+    )
+    assert auth.client.get(endpoint).json()["currencies"][0]["ml_state"] == "active"
+    auth.use(first_session)
+    assert auth.client.get(endpoint).json() == original
+    detail = auth.client.get(f"/api/v1/transactions/{identifier}")
+    assert (
+        auth.client.patch(
+            f"/api/v1/transactions/{identifier}/category",
+            json={"category": "Transfers"},
+            headers={"X-CSRF-Token": auth.csrf(), "If-Match": f'"{detail.json()["version"]}"'},
+        ).status_code
+        == 200
+    )
+    assert not auth.client.get(endpoint).json()["currencies"][0]["items"]
