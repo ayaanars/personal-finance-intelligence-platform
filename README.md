@@ -3,8 +3,12 @@
 Personal financial intelligence platform. The repository implements a development
 foundation, backend authentication and canonical CSV statement imports with
 PostgreSQL staging and explicit finalization. Phase 10's public product page and
-login/register flow are complete. The existing authenticated statement-to-history
-implementation is preserved in progress; private-app completion is a separate task.
+login/register flow and authenticated statement-to-history journey are complete.
+Phase 11 adds a real Overview with currency-separated monthly summaries, spending,
+merchant outflow, recent trends and explainable changes over time.
+Phase 12 adds richer change visualizations, personal baselines, likely recurring
+patterns, selectable trends, date patterns, purchase statistics, merchant momentum
+and movement signals. Methodologies are in [ADR 0009](docs/adr/0009-longitudinal-intelligence.md).
 The implemented CSV contract is documented in [API.md](docs/API.md) and
 [ADR 0004](docs/adr/0004-canonical-csv-import.md).
 
@@ -73,6 +77,22 @@ variables override the file. The URL is required. Liveness works with an unavail
 database; readiness returns a generic 503. No migrations run at application startup.
 
 ## Checks
+
+### Reset a local development password
+
+From this repository's root, with the local Docker stack running:
+
+```powershell
+docker compose exec api python -m ledgerx.modules.identity.dev_reset_password --email "you@example.com"
+```
+
+Replace the email with your local account email. Enter and confirm a new 15-128
+character password at the hidden prompts; do not pass it as a command argument.
+The command requires development settings and a local DB host. It updates only
+the matching credential hash/timestamp, preserving all other data and sessions.
+No API or email recovery is provided. See [ADR 0008](docs/adr/0008-local-development-password-reset.md).
+
+### Automated checks
 
 From `apps/api`:
 
@@ -147,5 +167,12 @@ See [architecture](docs/ARCHITECTURE.md), [foundation ADR](docs/adr/0001-develop
 The client uses cookie sessions, CSRF-protected raw CSV uploads, explicit
 whole-import finalization, bounded transaction pages and versioned category corrections.
 Amounts remain exact decimal strings. The landing-page example is clearly labeled
-synthetic; private screens always read the real backend. Behavioral analytics and
-other planned intelligence remain unavailable. See [ADR 0006](docs/adr/0006-public-entry-and-product-client.md).
+synthetic; private screens always read the real backend. Overview at `/app` uses
+`GET /api/v1/analytics/intelligence?month=YYYY-MM` (month optional, latest imported month
+by default). It interprets finalized imported activity, never account balances.
+See [ADR 0007](docs/adr/0007-financial-intelligence.md) for income, transfer, refund,
+currency and comparison semantics. The legacy `/analytics/overview` retains its
+six-month window; the intelligence endpoint uses seven. Baselines use 3-6 prior
+months; likely recurring patterns require three consecutive monthly charges.
+Budgets, forecasts, risk/ML, essential/discretionary classifications and LLM insights
+remain deferred.

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { intelligenceSchema, overviewSchema } from "./analytics";
 
 export const categories = [
   "Income",
@@ -189,6 +190,14 @@ async function mutate<T>(
   });
 }
 export const api = {
+  intelligence: (month?: string) => request(
+    `/analytics/intelligence${month ? `?month=${encodeURIComponent(month)}` : ""}`,
+    intelligenceSchema,
+  ),
+  overview: (month?: string) => request(
+    `/analytics/overview${month ? `?month=${encodeURIComponent(month)}` : ""}`,
+    overviewSchema,
+  ),
   me: () => request("/me", userSchema),
   credentials: (mode: "login" | "register", email: string, password: string) =>
     request(`/auth/${mode}`, mode === "login" ? z.unknown() : userSchema, {

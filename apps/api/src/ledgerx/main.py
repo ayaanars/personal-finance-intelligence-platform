@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from ledgerx.api.analytics import router as analytics_router
 from ledgerx.api.auth import router as auth_router
 from ledgerx.api.health import router
 from ledgerx.api.imports import router as imports_router
@@ -51,4 +52,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(auth_router)
     app.include_router(imports_router)
     app.include_router(transactions_router)
+    app.include_router(analytics_router)
     return app

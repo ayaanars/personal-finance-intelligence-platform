@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "@fontsource-variable/geist";
 import "./globals.css";
 import "./public.css";
+import "./overview.css";
 import { SessionProvider } from "@/components/session";
 
 export const metadata: Metadata = {

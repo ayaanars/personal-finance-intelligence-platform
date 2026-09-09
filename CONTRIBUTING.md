@@ -3,7 +3,10 @@
 Read `AGENTS.md`, `docs/ARCHITECTURE.md`, and relevant design documents before edits.
 The implemented scope is the development foundation, backend authentication and
 canonical CSV imports, transaction understanding and the Phase 10 public/product
-frontend. Other financial features require separate authorization.
+frontend and Phase 11 financial intelligence Overview. Other financial features
+require separate authorization. Analytics semantics are recorded in ADR 0007.
+Phase 12 longitudinal intelligence, baselines and recurring patterns are implemented
+under ADR 0009. Preserve its evidence thresholds and currency-separated semantics.
 
 Use the installation and check commands in README.md. Commit dependency manifests
 and lockfiles together. Use `uv add --bounds exact` (or `--dev --bounds exact`) and

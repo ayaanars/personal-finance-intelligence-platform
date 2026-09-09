@@ -35,9 +35,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
           Ledger<span>X</span>
         </Link>
         <nav aria-label="Primary">
+          <Link href="/app" aria-current={pathname === "/app" ? "page" : undefined}>
+            Overview
+          </Link>
           <Link
             aria-current={
-              pathname === "/app" || pathname.startsWith("/app/transactions")
+              pathname.startsWith("/app/transactions")
                 ? "page"
                 : undefined
             }
