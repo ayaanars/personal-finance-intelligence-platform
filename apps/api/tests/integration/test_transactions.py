@@ -86,12 +86,12 @@ def test_override_reprocess_clear_and_conflict(auth: Harness) -> None:
         ).status_code
         == 409
     )
-    with patch("ledgerx.modules.transactions.service.RULE_VERSION", "understanding-v2"):
+    with patch("ledgerx.modules.transactions.service.RULE_VERSION", "understanding-test-next"):
         response = auth.client.post(endpoint + "/reprocess", json={}, headers=headers)
         assert response.status_code == 200
         refreshed = response.json()
         assert refreshed["category"] == "Education" and refreshed["version"] == 3
-        assert refreshed["rule_version"] == "understanding-v2"
+        assert refreshed["rule_version"] == "understanding-test-next"
         assert (
             auth.client.post(endpoint + "/reprocess", json={}, headers=headers).json() == refreshed
         )
@@ -327,3 +327,208 @@ def test_concurrent_reprocess_preserves_override(auth: Harness) -> None:
     with ThreadPoolExecutor(max_workers=2) as pool:
         assert list(pool.map(request, [True, False])) == [200, 200]
     assert auth.client.get(endpoint).json()["category"] == "Education"
+
+
+def test_merchant_learning_lifecycle(auth: Harness) -> None:
+    headers, items = finalized(auth)
+    owner = str(auth.client.cookies["ledgerx_session"])
+    endpoint = f"{TX}/{items[0]['id']}"
+
+    def correct(category: str | None, action: str = "keep") -> dict[str, object]:
+        current = auth.client.get(endpoint).json()
+        response = auth.client.patch(
+            endpoint + "/category",
+            json={"category": category, "merchant_preference": action},
+            headers={**headers, "If-Match": f'"{current["version"]}"'},
+        )
+        assert response.status_code == 200, response.text
+        return dict(response.json())
+
+    saved = correct("Education", "save")
+    assert saved["categorization_source"] == "manual"
+    assert saved["automatic_source"] == "user_preference"
+    assert correct("Travel")["automatic_category"] == "Education"
+    refreshed = auth.client.post(endpoint + "/reprocess", json={}, headers=headers).json()
+    assert refreshed["category"] == "Travel"
+    assert refreshed["automatic_category"] == "Education"
+
+    # Future aliases use the durable preference; repeated finalization cannot duplicate facts.
+    def future() -> dict[str, object]:
+        batch = upload(
+            auth,
+            {
+                **headers,
+                "Content-Type": "text/csv",
+                "X-Filename": "synthetic.csv",
+                "Idempotency-Key": str(uuid4()),
+            },
+            HEADER + b"2026-09-02,CARREFOUR CITY,-25,AED\n",
+        )
+        final_headers = finalize_headers(headers)
+        for _ in range(2):
+            response = auth.client.post(f"{BASE}/{batch}/finalize", json={}, headers=final_headers)
+            assert response.status_code == 200, response.text
+        return next(
+            item
+            for item in auth.client.get(TX).json()["items"]
+            if item["raw_description"] == "CARREFOUR CITY"
+        )
+
+    learned = future()
+    assert learned["category"] == "Education" and learned["automatic_source"] == "user_preference"
+    assert len(auth.client.get(TX).json()["items"]) == 3
+    # Existing rows change only on explicit reprocessing.
+    second = f"{TX}/{items[1]['id']}"
+    assert auth.client.get(second).json()["category"] == "Groceries"
+    assert (
+        auth.client.post(second + "/reprocess", json={}, headers=headers).json()["category"]
+        == "Education"
+    )
+    assert correct("Health", "save")["automatic_category"] == "Health"
+    assert correct(None)["category"] == "Health"
+    forgotten = correct(None, "forget")
+    assert forgotten["category"] == "Groceries"
+    assert (
+        auth.client.post(second + "/reprocess", json={}, headers=headers).json()["category"]
+        == "Groceries"
+    )
+    for key in ("id", "raw_description", "amount", "currency", "transaction_date"):
+        assert forgotten[key] == items[0][key]
+    correct("Education", "save")
+    auth.register("isolated-merchant@example.com")
+    auth.login("isolated-merchant@example.com")
+    headers = {"X-CSRF-Token": auth.csrf()}
+    assert future()["category"] == "Groceries"
+    assert (
+        auth.client.patch(
+            endpoint + "/category",
+            json={"category": "Other", "merchant_preference": "save"},
+            headers={**headers, "If-Match": '"1"'},
+        ).status_code
+        == 404
+    )
+    with auth.engine.connect() as db:
+        assert db.scalar(text("SELECT count(*) FROM merchant_preferences")) == 1
+        with pytest.raises(IntegrityError):
+            db.execute(
+                text(
+                    "UPDATE merchant_preferences SET workspace_id = "
+                    "(SELECT id FROM workspaces WHERE owner_user_id <> "
+                    "merchant_preferences.user_id LIMIT 1)"
+                )
+            )
+        db.rollback()
+    auth.use(owner)
+    assert auth.client.get(endpoint).json()["category"] == "Education"
+
+
+def test_reprocess_upgrades_weak_metadata(auth: Harness) -> None:
+    headers = setup(auth)
+    batch = upload(auth, headers, HEADER + b"2026-09-01,STARBUCKS 0483,-10,AED\n")
+    assert (
+        auth.client.post(
+            f"{BASE}/{batch}/finalize", json={}, headers=finalize_headers(headers)
+        ).status_code
+        == 200
+    )
+    item = auth.client.get(TX).json()["items"][0]
+    with auth.engine.begin() as db:
+        db.execute(
+            text(
+                "UPDATE transaction_enrichments SET merchant = NULL, merchant_code = NULL, "
+                "automatic_category = 'Other', source = 'fallback', "
+                "rule_version = 'understanding-v1'"
+            )
+        )
+        facts = db.execute(text("SELECT * FROM imported_transactions")).all()
+    headers = {"X-CSRF-Token": headers["X-CSRF-Token"]}
+    endpoint = f"{TX}/{item['id']}/reprocess"
+    updated = auth.client.post(endpoint, json={}, headers=headers).json()
+    assert updated["merchant"] == "Starbucks" and updated["category"] == "Food & Dining"
+    assert auth.client.post(endpoint, json={}, headers=headers).json() == updated
+    with auth.engine.connect() as db:
+        assert db.execute(text("SELECT * FROM imported_transactions")).all() == facts
+        assert db.scalar(text("SELECT count(*) FROM transaction_audit_events")) == 1
+    overview = auth.client.get("/api/v1/analytics/overview?month=2026-09").json()
+    assert "Starbucks" in str(overview) and "Food & Dining" in str(overview)
+    for route in ("intelligence", "unusual", "relationships"):
+        assert auth.client.get(f"/api/v1/analytics/{route}?month=2026-09").status_code == 200
+
+
+def test_preference_rolls_back_with_audit(auth: Harness) -> None:
+    headers, items = finalized(auth)
+    endpoint = f"{TX}/{items[0]['id']}"
+    with patch("ledgerx.modules.transactions.service.TransactionAudit", side_effect=RuntimeError):
+        response = auth.client.patch(
+            endpoint + "/category",
+            json={"category": "Education", "merchant_preference": "save"},
+            headers={**headers, "If-Match": '"1"'},
+        )
+    assert response.status_code == 500
+    assert auth.client.get(endpoint).json() == items[0]
+    with auth.engine.connect() as db:
+        assert db.scalar(text("SELECT count(*) FROM merchant_preferences")) == 0
+
+
+def test_unidentified_merchant_cannot_learn(auth: Harness) -> None:
+    headers = setup(auth)
+    batch = upload(auth, headers, HEADER + b"2026-09-01,POS PURCHASE 948201,-10,AED\n")
+    assert (
+        auth.client.post(
+            f"{BASE}/{batch}/finalize", json={}, headers=finalize_headers(headers)
+        ).status_code
+        == 200
+    )
+    item = auth.client.get(TX).json()["items"][0]
+    response = auth.client.patch(
+        f"{TX}/{item['id']}/category",
+        json={"category": "Education", "merchant_preference": "save"},
+        headers={"X-CSRF-Token": headers["X-CSRF-Token"], "If-Match": '"1"'},
+    )
+    assert response.status_code == 422
+    assert auth.client.get(f"{TX}/{item['id']}").json() == item
+
+
+def test_legacy_reads_use_preferences_without_writes(auth: Harness) -> None:
+    headers, items = finalized(auth)
+    response = auth.client.patch(
+        f"{TX}/{items[0]['id']}/category",
+        json={"category": "Education", "merchant_preference": "save"},
+        headers={**headers, "If-Match": '"1"'},
+    )
+    assert response.status_code == 200
+    # Simulate an older fact without enrichment, preserving its immutable record.
+    with auth.engine.begin() as db:
+        db.execute(
+            text("DELETE FROM transaction_enrichments WHERE transaction_id = :id"),
+            {"id": items[1]["id"]},
+        )
+    legacy = auth.client.get(f"{TX}/{items[1]['id']}").json()
+    assert legacy["category"] == "Education" and not legacy["enrichment_persisted"]
+    assert legacy in auth.client.get(TX).json()["items"]
+    for route in ("overview", "intelligence"):
+        response = auth.client.get(f"/api/v1/analytics/{route}?month=2026-09")
+        assert response.status_code == 200 and "Education" in response.text
+    with auth.engine.connect() as db:
+        assert db.scalar(text("SELECT count(*) FROM transaction_enrichments")) == 1
+
+
+def test_migration_refuses_to_discard_preferences(auth: Harness) -> None:
+    from pathlib import Path
+
+    from alembic import command
+    from alembic.config import Config
+
+    headers, items = finalized(auth)
+    response = auth.client.patch(
+        f"{TX}/{items[0]['id']}/category",
+        json={"category": "Education", "merchant_preference": "save"},
+        headers={**headers, "If-Match": '"1"'},
+    )
+    assert response.status_code == 200
+    with auth.engine.begin() as db, pytest.raises(DBAPIError):
+        config = Config(str(Path(__file__).parents[2] / "alembic.ini"))
+        config.attributes["connection"] = db
+        command.downgrade(config, "0005_understanding")
+    with auth.engine.connect() as db:
+        assert db.scalar(text("SELECT count(*) FROM merchant_preferences")) == 1

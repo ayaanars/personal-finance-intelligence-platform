@@ -23,7 +23,11 @@ def transactions(
 @router.get("/{transaction_id}")
 def transaction(transaction_id: UUID, context: Authenticated) -> TransactionView:
     fact = service.owned_fact(context.db, context.principal, transaction_id)
-    return service.view(fact, service.enrichment(context.db, context.principal, transaction_id))
+    return service.view(
+        fact,
+        service.enrichment(context.db, context.principal, transaction_id),
+        service.preferences_for(context.db, context.principal),
+    )
 
 
 @router.patch("/{transaction_id}/category")
@@ -41,6 +45,7 @@ def override(
         UUID(request.state.correlation_id),
         manual=True,
         category=body.category,
+        preference_action=body.merchant_preference,
         expected_version=int(if_match.strip('"')),
     )
 

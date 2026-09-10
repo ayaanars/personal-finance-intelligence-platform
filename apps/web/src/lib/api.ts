@@ -36,6 +36,8 @@ export const transactionSchema = z.object({
   raw_description: z.string(),
   normalized_description: z.string(),
   merchant: z.string().nullable(),
+  merchant_code: z.string().nullable().optional(),
+  merchant_source: z.string().nullable().optional(),
   category,
   categorization_source: z.string(),
   categorization_reason: z.string(),
@@ -222,11 +224,13 @@ export const api = {
     ),
   transaction: (id: string) =>
     request(`/transactions/${encodeURIComponent(id)}`, transactionSchema),
-  category: (transaction: Transaction, category: Category | null) =>
+  reprocess: (transaction: Transaction) =>
+    mutate(`/transactions/${transaction.id}/reprocess`, transactionSchema, { method: "POST", body: "{}" }),
+  category: (transaction: Transaction, category: Category | null, preference: "keep" | "save" | "forget" = "keep") =>
     mutate(`/transactions/${transaction.id}/category`, transactionSchema, {
       method: "PATCH",
       headers: { "If-Match": `"${transaction.version}"` },
-      body: JSON.stringify({ category }),
+      body: JSON.stringify({ category, ...(preference !== "keep" ? { merchant_preference: preference } : {}) }),
     }),
   upload: (file: File, key: string) =>
     mutate("/imports", importSchema, {

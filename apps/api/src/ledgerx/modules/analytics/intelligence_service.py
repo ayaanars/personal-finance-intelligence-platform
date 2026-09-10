@@ -21,7 +21,7 @@ from ledgerx.modules.analytics.schemas import CurrencyOverview
 from ledgerx.modules.identity.service import Principal
 from ledgerx.modules.transactions.enrichment_models import TransactionEnrichment as Enrichment
 from ledgerx.modules.transactions.models import ImportedTransaction as Fact
-from ledgerx.modules.transactions.service import owned_query
+from ledgerx.modules.transactions.service import owned_query, preferences_for
 from ledgerx.modules.transactions.understanding import understand
 
 
@@ -63,11 +63,12 @@ def load_history(
     )
     query = query.where(Fact.transaction_date >= start, Fact.transaction_date <= end)
     observations: dict[str, list[Observation]] = {}
+    preferences = preferences_for(db, principal)
     for fact, metadata in db.execute(
         query.add_columns(Enrichment).execution_options(yield_per=500)
     ):
         if metadata is None:
-            auto = understand(fact.description, fact.amount)
+            auto = understand(fact.description, fact.amount, preferences)
             category, merchant, rule = auto.category.value, auto.merchant, auto.rule_id
         else:
             category = metadata.manual_category or metadata.automatic_category

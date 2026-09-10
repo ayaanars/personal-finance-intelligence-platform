@@ -22,7 +22,10 @@ class TransactionEnrichment(Base):
         ),
         CheckConstraint(f"automatic_category IN ({CATEGORY_SQL})", name="automatic_category"),
         CheckConstraint(f"manual_category IN ({CATEGORY_SQL})", name="manual_category"),
-        CheckConstraint("source IN ('merchant_rule','description_rule','fallback')", name="source"),
+        CheckConstraint(
+            "source IN ('merchant_rule','description_rule','fallback','user_preference')",
+            name="source",
+        ),
         CheckConstraint("version >= 1", name="version"),
         CheckConstraint(
             "(manual_category IS NULL) = (manual_updated_at IS NULL)", name="manual_shape"
@@ -32,6 +35,8 @@ class TransactionEnrichment(Base):
     user_id: Mapped[UUID]
     normalized_description: Mapped[str] = mapped_column(String(1500))
     merchant: Mapped[str | None] = mapped_column(String(100))
+    merchant_code: Mapped[str | None] = mapped_column(String(80))
+    merchant_source: Mapped[str | None] = mapped_column(String(24))
     automatic_category: Mapped[str] = mapped_column(String(40))
     source: Mapped[str] = mapped_column(String(24))
     reason: Mapped[str] = mapped_column(String(250))
@@ -59,3 +64,20 @@ class TransactionAudit(IdentityMixin, CreatedAtMixin, Base):
     transaction_id: Mapped[UUID]
     event_code: Mapped[str] = mapped_column(String(16))
     correlation_id: Mapped[UUID]
+
+
+class MerchantPreference(Base):
+    __tablename__ = "merchant_preferences"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["user_id", "workspace_id"],
+            ["workspaces.owner_user_id", "workspaces.id"],
+            name="fk_merchant_preferences_owner",
+            ondelete="RESTRICT",
+        ),
+        CheckConstraint(f"category IN ({CATEGORY_SQL})", name="category"),
+    )
+    user_id: Mapped[UUID] = mapped_column(primary_key=True)
+    workspace_id: Mapped[UUID] = mapped_column(primary_key=True)
+    merchant_code: Mapped[str] = mapped_column(String(80), primary_key=True)
+    category: Mapped[str] = mapped_column(String(40))

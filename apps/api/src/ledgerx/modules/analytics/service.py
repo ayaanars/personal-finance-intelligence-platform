@@ -17,7 +17,7 @@ from ledgerx.modules.analytics.schemas import Overview
 from ledgerx.modules.identity.service import Principal
 from ledgerx.modules.transactions.enrichment_models import TransactionEnrichment as Enrichment
 from ledgerx.modules.transactions.models import ImportedTransaction as Fact
-from ledgerx.modules.transactions.service import owned_query
+from ledgerx.modules.transactions.service import owned_query, preferences_for
 from ledgerx.modules.transactions.understanding import understand
 
 
@@ -52,12 +52,13 @@ def overview(db: Session, principal: Principal, month: str | None) -> Overview:
     )
 
     def activity() -> Iterator[Activity]:
+        preferences = preferences_for(db, principal)
         for row in db.execute(grouped):
             yield Activity(*row)
         # One streaming query, not an N+1. Never write enrichment during analytics reads.
         legacy = window.outerjoin(Enrichment, join).where(Enrichment.transaction_id.is_(None))
         for fact in db.scalars(legacy.execution_options(yield_per=500)):
-            understood = understand(fact.description, fact.amount)
+            understood = understand(fact.description, fact.amount, preferences)
             yield Activity(
                 month_name(fact.transaction_date),
                 fact.currency,

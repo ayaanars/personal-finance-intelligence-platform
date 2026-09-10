@@ -219,7 +219,7 @@ it("saves a category from the server response", async () => {
   );
   await userEvent.click(screen.getByRole("button", { name: "Save category" }));
   expect(await screen.findByRole("status")).toHaveTextContent("Category saved");
-  expect(save).toHaveBeenCalledWith(transaction, "Education");
+  expect(save).toHaveBeenCalledWith(transaction, "Education", "keep");
 });
 it("refetches conflicts before allowing another save", async () => {
   const read = vi
@@ -288,4 +288,34 @@ it("submits browser-autofilled values even without React change events", async (
     "autofill@example.com",
     "synthetic-autofilled-password",
   );
+});
+
+it("remembers and removes a merchant preference only when requested", async () => {
+  const known = { ...transaction, merchant_code: "talabat", merchant_source: "catalog_alias" };
+  vi.spyOn(api, "transaction").mockResolvedValue(known);
+  const save = vi.spyOn(api, "category").mockResolvedValue({ ...known, category: "Education", version: 2, categorization_source: "manual" });
+  render(<TransactionDetail id={id} />);
+  await userEvent.selectOptions(await screen.findByLabelText("Category"), "Education");
+  const preference = screen.getByLabelText("Future Talabat transactions");
+  expect(preference).toHaveValue("keep");
+  await userEvent.selectOptions(preference, "save");
+  await userEvent.click(screen.getByRole("button", { name: "Save category" }));
+  await waitFor(() => expect(save).toHaveBeenCalledWith(known, "Education", "save"));
+  await waitFor(() => expect(preference).toHaveValue("keep"));
+  await userEvent.selectOptions(preference, "forget");
+  await userEvent.click(screen.getByRole("button", { name: "Save category" }));
+  await waitFor(() => expect(save.mock.calls[1][2]).toBe("forget"));
+});
+
+it("refreshes automatic metadata without clearing the selected correction", async () => {
+  const corrected = { ...transaction, category: "Travel" as const, categorization_source: "manual" };
+  vi.spyOn(api, "transaction").mockResolvedValue(corrected);
+  const refresh = vi.spyOn(api, "reprocess").mockResolvedValue({ ...corrected, version: 2 });
+  render(<TransactionDetail id={id} />);
+  await screen.findByLabelText("Category");
+  await userEvent.click(screen.getByText("Why this automatic category?"));
+  await userEvent.click(screen.getByRole("button", { name: "Refresh automatic details" }));
+  await waitFor(() => expect(refresh).toHaveBeenCalledWith(corrected));
+  expect(screen.getByLabelText("Category")).toHaveValue("Travel");
+  expect(await screen.findByRole("status")).toHaveTextContent("corrections are preserved");
 });

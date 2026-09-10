@@ -10,7 +10,11 @@ from sqlalchemy.orm import Session
 
 from ledgerx.modules.identity.service import Principal
 from ledgerx.modules.imports.models import StatementImport
-from ledgerx.modules.transactions.enrichment_models import TransactionAudit, TransactionEnrichment
+from ledgerx.modules.transactions.enrichment_models import (
+    MerchantPreference,
+    TransactionAudit,
+    TransactionEnrichment,
+)
 from ledgerx.modules.transactions.errors import TransactionFailure
 from ledgerx.modules.transactions.models import ImportedTransaction
 from ledgerx.modules.transactions.schemas import Page, TransactionPage, TransactionView
@@ -18,15 +22,40 @@ from ledgerx.modules.transactions.understanding import (
     NORMALIZATION_VERSION,
     RULE_VERSION,
     Category,
+    merchant_match,
     understand,
 )
 
 
-def automatic_values(fact: ImportedTransaction) -> dict[str, str | None]:
-    result = understand(fact.description, fact.amount)
+def preferences_for(db: Session, principal: Principal) -> dict[str, Category]:
+    return {
+        row.merchant_code: Category(row.category)
+        for row in db.scalars(
+            select(MerchantPreference).where(
+                MerchantPreference.user_id == principal.user.id,
+                MerchantPreference.workspace_id == principal.workspace.id,
+            )
+        )
+    }
+
+
+def automatic_values(
+    fact: ImportedTransaction,
+    preferences: dict[str, Category] | None = None,
+) -> dict[str, str | None]:
+    result = understand(fact.description, fact.amount, preferences)
+    merchant = merchant_match(result.normalized_description)
     return dict(
         normalized_description=result.normalized_description,
         merchant=result.merchant,
+        merchant_code=merchant.code if merchant else None,
+        merchant_source=(
+            "catalog_alias"
+            if merchant
+            else "description_label"
+            if result.merchant
+            else "unidentified"
+        ),
         automatic_category=result.category.value,
         source=result.source,
         reason=result.reason,
@@ -45,6 +74,7 @@ def enrich_import(db: Session, principal: Principal, import_id: UUID) -> None:
         )
     ).all()
     now = datetime.now(UTC)
+    preferences = preferences_for(db, principal)
     for start in range(0, len(facts), 500):
         db.execute(
             insert(TransactionEnrichment),
@@ -53,7 +83,7 @@ def enrich_import(db: Session, principal: Principal, import_id: UUID) -> None:
                     transaction_id=fact.id,
                     user_id=principal.user.id,
                     automatic_updated_at=now,
-                    **automatic_values(fact),
+                    **automatic_values(fact, preferences),
                 )
                 for fact in facts[start : start + 500]
             ],
@@ -92,10 +122,14 @@ def enrichment(db: Session, principal: Principal, identifier: UUID) -> Transacti
     )
 
 
-def view(fact: ImportedTransaction, metadata: TransactionEnrichment | None) -> TransactionView:
+def view(
+    fact: ImportedTransaction,
+    metadata: TransactionEnrichment | None,
+    preferences: dict[str, Category] | None = None,
+) -> TransactionView:
     # Legacy facts remain visible immediately after additive migration; GET performs no writes.
     auto = (
-        automatic_values(fact)
+        automatic_values(fact, preferences)
         if metadata is None
         else {key: getattr(metadata, key) for key in automatic_values_keys}
     )
@@ -108,6 +142,8 @@ def view(fact: ImportedTransaction, metadata: TransactionEnrichment | None) -> T
         raw_description=fact.description,
         normalized_description=str(auto["normalized_description"]),
         merchant=auto["merchant"],
+        merchant_code=auto["merchant_code"],
+        merchant_source=auto["merchant_source"],
         category=Category(str(manual or auto["automatic_category"])),
         categorization_source="manual" if manual else str(auto["source"]),
         categorization_reason="User selected this category." if manual else str(auto["reason"]),
@@ -125,6 +161,8 @@ def view(fact: ImportedTransaction, metadata: TransactionEnrichment | None) -> T
 automatic_values_keys = (
     "normalized_description",
     "merchant",
+    "merchant_code",
+    "merchant_source",
     "automatic_category",
     "source",
     "reason",
@@ -167,8 +205,9 @@ def list_transactions(
         if more
         else None
     )
+    preferences = preferences_for(db, principal)
     return TransactionPage(
-        items=[view(fact, metadata.get(fact.id)) for fact in selected],
+        items=[view(fact, metadata.get(fact.id), preferences) for fact in selected],
         page=Page(next_cursor=next_cursor, has_more=more),
     )
 
@@ -182,6 +221,7 @@ def update(
     manual: bool,
     category: Category | None = None,
     expected_version: int | None = None,
+    preference_action: str = "keep",
 ) -> TransactionView:
     # Authentication holds the owner lock, serializing all supported mutations for this user.
     fact = owned_fact(db, principal, identifier)
@@ -191,7 +231,43 @@ def update(
         raise TransactionFailure(
             409, "VERSION_CONFLICT", "Retrieve the current transaction version"
         )
-    values = automatic_values(fact)
+    preference_changed = False
+    if manual and preference_action != "keep":
+        merchant = merchant_match(fact.description)
+        if merchant is None or (preference_action == "save" and category is None):
+            raise TransactionFailure(
+                422,
+                "MERCHANT_PREFERENCE_INVALID",
+                "Select a category and an identified merchant to remember",
+            )
+        saved = db.scalar(
+            select(MerchantPreference).where(
+                MerchantPreference.user_id == principal.user.id,
+                MerchantPreference.workspace_id == principal.workspace.id,
+                MerchantPreference.merchant_code == merchant.code,
+            )
+        )
+        if preference_action == "forget":
+            if saved is not None:
+                db.delete(saved)
+                preference_changed = True
+        else:
+            assert category is not None
+            if saved is None:
+                db.add(
+                    MerchantPreference(
+                        user_id=principal.user.id,
+                        workspace_id=principal.workspace.id,
+                        merchant_code=merchant.code,
+                        category=category.value,
+                    )
+                )
+                preference_changed = True
+            elif saved.category != category.value:
+                saved.category = category.value
+                preference_changed = True
+        db.flush()
+    values = automatic_values(fact, preferences_for(db, principal))
     if metadata is None:
         metadata = TransactionEnrichment(
             transaction_id=fact.id,
@@ -203,14 +279,14 @@ def update(
         db.add(metadata)
         changed = True
     else:
-        changed = False
+        changed = preference_changed
     if manual:
         desired = category.value if category is not None else None
         if metadata.manual_category != desired:
             metadata.manual_category = desired
             metadata.manual_updated_at = datetime.now(UTC) if desired is not None else None
             changed = True
-    else:
+    if not manual or preference_action != "keep" or category is None:
         for key, value in values.items():
             if getattr(metadata, key) != value:
                 setattr(metadata, key, value)

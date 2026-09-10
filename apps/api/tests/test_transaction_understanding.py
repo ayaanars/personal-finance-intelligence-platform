@@ -42,6 +42,7 @@ def test_merchant_aliases(rule: object) -> None:
     for alias in rule.aliases:
         normalized = normalize_description(alias.lower() + " AE 12345")
         assert merchant_match(normalized) == rule
+        assert understand(normalized, Decimal("-1")).category == rule.category
         assert merchant_match(normalized) == merchant_match(normalized)
 
 
@@ -138,3 +139,81 @@ def test_order_independence(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(rules, "KEYWORDS", tuple(reversed(rules.KEYWORDS)))
     monkeypatch.setattr(rules, "MOVEMENTS", tuple(reversed(rules.MOVEMENTS)))
     assert [understand(example, Decimal("-1")) for example in examples] == before
+
+
+@pytest.mark.parametrize(
+    "description,merchant,category",
+    [
+        ("STARBUCKS DUBAI MALL", "Starbucks", Category.DINING),
+        ("STARBUCKS AE", "Starbucks", Category.DINING),
+        ("STARBUCKS 0483", "Starbucks", Category.DINING),
+        ("CARREFOUR CITY", "Carrefour", Category.GROCERIES),
+        ("CARREFOUR MARKET", "Carrefour", Category.GROCERIES),
+        ("AMAZON.AE", "Amazon", Category.SHOPPING),
+        ("AMAZON MKTPLACE", "Amazon", Category.SHOPPING),
+        ("AMZN", "Amazon", Category.SHOPPING),
+        ("NOON.COM", "Noon", Category.SHOPPING),
+        ("NOON UAE", "Noon", Category.SHOPPING),
+        ("DU MOBILE BILL", "du", Category.UTILITIES),
+        ("DU TELECOM", "du", Category.UTILITIES),
+        ("DEWA", "DEWA", Category.UTILITIES),
+        ("CAREEM", "Careem", Category.TRANSPORT),
+        ("UBER", "Uber", Category.TRANSPORT),
+        ("ENOC", "ENOC", Category.TRANSPORT),
+        ("ADNOC", "ADNOC", Category.TRANSPORT),
+        ("NETFLIX", "Netflix", Category.ENTERTAINMENT),
+        ("SPOTIFY", "Spotify", Category.ENTERTAINMENT),
+        ("GYMNATION", "GymNation", Category.HEALTH),
+        ("LIFE PHARMACY", "Life Pharmacy", Category.HEALTH),
+        ("EMIRATES", "Emirates", Category.TRAVEL),
+        ("ETIHAD", "Etihad", Category.TRAVEL),
+        ("AMAZON FRESH", "Amazon", Category.GROCERIES),
+        ("AMZN.FRESH REF 123456", "Amazon", Category.GROCERIES),
+        ("STARBUCKS CLOTHING", "Starbucks", Category.DINING),
+        ("life-pharmacy", "Life Pharmacy", Category.HEALTH),
+    ],
+)
+def test_phase16_merchants(description: str, merchant: str, category: Category) -> None:
+    result = understand(description, Decimal("-10"))
+    assert result.merchant == merchant
+    assert result.category == category != Category.OTHER
+
+
+@pytest.mark.parametrize(
+    "description",
+    [
+        "POS PURCHASE 948201",
+        "CARD TRANSACTION REF 284829",
+        "PAYMENT 83726",
+    ],
+)
+def test_insufficient_evidence(description: str) -> None:
+    result = understand(description, Decimal("-10"))
+    assert result.merchant is None and result.category == Category.OTHER
+    assert result.rule_id == "unmatched" and result.reason
+
+
+def test_identification_independent_of_category_and_preference_confidence() -> None:
+    result = understand("POS PURCHASE ACME WORKSHOP 1234", Decimal("-1"))
+    assert result.merchant == "Acme Workshop" and result.category == Category.OTHER
+    assert merchant_match(result.normalized_description) is None
+    for description in (
+        "EMIRATES NBD BANK FEE",
+        "EMIRATES.NBD BANK FEE",
+        "ETIHAD CREDIT PAYMENT",
+        "DUBAI",
+        "AMZNXYZ",
+    ):
+        assert merchant_match(description) is None
+
+
+def test_preference_precedence_and_return_semantics() -> None:
+    preferences = {"amazon": Category.EDUCATION}
+    for description in ("AMZN", "AMAZON.AE", "AMAZON FRESH"):
+        result = understand(description, Decimal("-10"), preferences)
+        assert result.category == Category.EDUCATION
+        assert result.source == "user_preference" and result.merchant == "Amazon"
+    result = understand("AMAZON FRESH REFUND", Decimal("10"), preferences)
+    assert result.rule_id.startswith("return_")
+    assert result.category == Category.EDUCATION
+    assert understand("AMAZON FRESH REFUND", Decimal("10")).category == Category.GROCERIES

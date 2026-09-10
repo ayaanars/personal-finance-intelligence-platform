@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -9,6 +10,7 @@ from ledgerx.modules.transactions.understanding import Category
 class CategoryOverride(BaseModel):
     model_config = ConfigDict(extra="forbid")
     category: Category | None
+    merchant_preference: Literal["keep", "save", "forget"] = "keep"
 
 
 class TransactionView(BaseModel):
@@ -19,6 +21,8 @@ class TransactionView(BaseModel):
     raw_description: str
     normalized_description: str
     merchant: str | None
+    merchant_code: str | None = None
+    merchant_source: str | None = None
     category: Category
     categorization_source: str
     categorization_reason: str

@@ -194,3 +194,12 @@ separates currencies and returns Notable/High evidence. Isolation Forest activat
 at 100 prior purchases over three consecutive months; rules remain authoritative.
 See [ADR 0010](docs/adr/0010-unusual-activity.md) for thresholds and limitations.
 Private date labels are human-readable; API and stored dates retain ISO formats.
+
+## Phase 16 merchant intelligence
+
+The transaction detail category form can remember a category for that merchant in
+this user's workspace, keep an existing preference, or remove it. Preferences
+apply to future imports and explicit reprocessing; individual corrections take
+priority. Refresh automatic details uses current deterministic merchant mappings
+without changing imported financial facts. See [ADR 0012](docs/adr/0012-merchant-intelligence.md)
+for precedence, catalog confidence, migration and historical-data behavior.

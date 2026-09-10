@@ -175,6 +175,7 @@ export function TransactionHistory() {
 export function TransactionDetail({ id }: { id: string }) {
   const [item, setItem] = useState<Transaction | null>(null);
   const [selection, setSelection] = useState<Category | "">("");
+  const [preference, setPreference] = useState<"keep" | "save" | "forget">("keep");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -186,6 +187,7 @@ export function TransactionDetail({ id }: { id: string }) {
       .then((value) => {
         if (active) {
           setItem(value);
+          setPreference("keep");
           setSelection(
             value.categorization_source === "manual" ? value.category : "",
           );
@@ -205,8 +207,9 @@ export function TransactionDetail({ id }: { id: string }) {
     setError("");
     setNotice("");
     try {
-      const updated = await api.category(item, selection || null);
+      const updated = await api.category(item, selection || null, preference);
       setItem(updated);
+      setPreference("keep");
       setNotice("Category saved. Your original transaction is unchanged.");
     } catch (e) {
       setError(errorMessage(e));
@@ -214,6 +217,7 @@ export function TransactionDetail({ id }: { id: string }) {
       try {
         const latest = await api.transaction(id);
         setItem(latest);
+        setPreference("keep");
         setSelection(
           latest.categorization_source === "manual" ? latest.category : "",
         );
@@ -293,9 +297,10 @@ export function TransactionDetail({ id }: { id: string }) {
                 <select
                   id="category"
                   value={selection}
-                  onChange={(e) =>
-                    setSelection(e.target.value as Category | "")
-                  }
+                  onChange={(e) => {
+                    setSelection(e.target.value as Category | "");
+                    if (!e.target.value && preference === "save") setPreference("keep");
+                  }}
                   disabled={busy}
                 >
                   <option value="">
@@ -308,6 +313,18 @@ export function TransactionDetail({ id }: { id: string }) {
                 <p className="hint">
                   Your correction takes priority. Choose automatic to remove it.
                 </p>
+                {item.merchant_code && (
+                  <>
+                    <label htmlFor="merchant-preference">Future {item.merchant} transactions</label>
+                    <select id="merchant-preference" value={preference} disabled={busy}
+                      onChange={(e) => setPreference(e.target.value as "keep" | "save" | "forget")}>
+                      <option value="keep">Keep existing preference</option>
+                      <option value="save" disabled={!selection}>Remember selected category</option>
+                      <option value="forget">Remove saved merchant preference</option>
+                    </select>
+                    <p className="hint">Applies only to your workspace, on future imports and reprocessing. Individual corrections always win.</p>
+                  </>
+                )}
                 <button className="primary" disabled={busy}>
                   {busy ? "Saving category…" : "Save category"}
                 </button>
@@ -323,6 +340,14 @@ export function TransactionDetail({ id }: { id: string }) {
                 <p className="hint">
                   Automatic category: {item.automatic_category}
                 </p>
+                <button type="button" disabled={busy} onClick={async () => {
+                  setBusy(true); setError(""); setNotice("");
+                  try {
+                    setItem(await api.reprocess(item));
+                    setNotice("Automatic details refreshed. Individual corrections are preserved.");
+                  } catch (e) { setError(errorMessage(e)); }
+                  finally { setBusy(false); }
+                }}>Refresh automatic details</button>
                 {!item.enrichment_persisted && (
                   <p className="hint">
                     Calculated using current rules for an earlier import.

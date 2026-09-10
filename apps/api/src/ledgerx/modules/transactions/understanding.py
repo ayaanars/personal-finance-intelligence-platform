@@ -1,12 +1,14 @@
 """Deterministic advisory metadata; never alters imported financial facts."""
 
 import re
+import unicodedata
+from collections.abc import Mapping
 from dataclasses import dataclass
 from decimal import Decimal
 from enum import StrEnum
 
-RULE_VERSION = "understanding-v1"
-NORMALIZATION_VERSION = "description-v1"
+RULE_VERSION = "understanding-v2"
+NORMALIZATION_VERSION = "description-v2"
 
 
 class Category(StrEnum):
@@ -29,7 +31,7 @@ class Category(StrEnum):
 
 def normalize_description(raw: str) -> str:
     """Uppercase, collapse whitespace/repeated separators; strip only labeled numeric suffixes."""
-    value = " ".join(raw.upper().split())
+    value = " ".join(unicodedata.normalize("NFKC", raw).upper().split())
     value = re.sub(r"([|*_.!;:/-])\1+", r"\1", value)
     # Repeated labeled references can occur; remove to a fixed point for idempotency.
     while True:
@@ -49,25 +51,44 @@ class MerchantRule:
 
 
 MERCHANTS = (
+    MerchantRule("starbucks", "Starbucks", Category.DINING, ("STARBUCKS",)),
+    MerchantRule("costa", "Costa Coffee", Category.DINING, ("COSTA COFFEE",)),
+    MerchantRule("mcdonalds", "McDonald's", Category.DINING, ("MCDONALDS", "MCDONALD'S")),
+    MerchantRule("spinneys", "Spinneys", Category.GROCERIES, ("SPINNEYS",)),
+    MerchantRule("waitrose", "Waitrose", Category.GROCERIES, ("WAITROSE",)),
+    MerchantRule(
+        "union_coop", "Union Coop", Category.GROCERIES, ("UNION COOP", "UNION COOPERATIVE")
+    ),
+    MerchantRule("nesto", "Nesto", Category.GROCERIES, ("NESTO",)),
+    MerchantRule("noon", "Noon", Category.SHOPPING, ("NOON",)),
+    MerchantRule("ikea", "IKEA", Category.SHOPPING, ("IKEA",)),
+    MerchantRule("namshi", "Namshi", Category.SHOPPING, ("NAMSHI",)),
+    MerchantRule("gymnation", "GymNation", Category.HEALTH, ("GYMNATION", "GYM NATION")),
+    MerchantRule("life_pharmacy", "Life Pharmacy", Category.HEALTH, ("LIFE PHARMACY",)),
+    MerchantRule("aster", "Aster Pharmacy", Category.HEALTH, ("ASTER PHARMACY",)),
+    MerchantRule("fitness_first", "Fitness First", Category.HEALTH, ("FITNESS FIRST",)),
+    MerchantRule("vox", "VOX Cinemas", Category.ENTERTAINMENT, ("VOX CINEMAS",)),
+    MerchantRule("reel", "Reel Cinemas", Category.ENTERTAINMENT, ("REEL CINEMAS",)),
+    MerchantRule("flydubai", "flydubai", Category.TRAVEL, ("FLYDUBAI",)),
+    MerchantRule("air_arabia", "Air Arabia", Category.TRAVEL, ("AIR ARABIA",)),
+    MerchantRule("salik", "Salik", Category.TRANSPORT, ("SALIK",)),
     MerchantRule("talabat", "Talabat", Category.DINING, ("TALABAT",)),
     MerchantRule("deliveroo", "Deliveroo", Category.DINING, ("DELIVEROO",)),
     MerchantRule("carrefour", "Carrefour", Category.GROCERIES, ("CARREFOUR",)),
     MerchantRule("lulu", "Lulu", Category.GROCERIES, ("LULU", "LU LU")),
     MerchantRule("enoc", "ENOC", Category.TRANSPORT, ("ENOC",)),
-    MerchantRule("adnoc", "ADNOC", Category.TRANSPORT, ("ADNOC FUEL", "ADNOC STATION")),
+    MerchantRule("adnoc", "ADNOC", Category.TRANSPORT, ("ADNOC",)),
     MerchantRule("uber_eats", "Uber Eats", Category.DINING, ("UBER EATS", "UBEREATS"), ("uber",)),
     MerchantRule("uber", "Uber", Category.TRANSPORT, ("UBER",)),
-    MerchantRule("careem", "Careem", Category.TRANSPORT, ("CAREEM RIDE", "CAREEM TAXI")),
+    MerchantRule("careem", "Careem", Category.TRANSPORT, ("CAREEM",)),
     MerchantRule("netflix", "Netflix", Category.ENTERTAINMENT, ("NETFLIX.COM", "NETFLIX")),
     MerchantRule("spotify", "Spotify", Category.ENTERTAINMENT, ("SPOTIFY",)),
-    MerchantRule("amazon", "Amazon", Category.SHOPPING, ("AMAZON", "AMZN MKTPLACE")),
-    MerchantRule("du", "Du", Category.UTILITIES, ("DU TELECOM", "DU")),
+    MerchantRule("amazon", "Amazon", Category.SHOPPING, ("AMAZON", "AMZN")),
+    MerchantRule("du", "du", Category.UTILITIES, ("DU TELECOM", "DU")),
     MerchantRule("etisalat", "Etisalat", Category.UTILITIES, ("ETISALAT", "E& TELECOM")),
     MerchantRule("dewa", "DEWA", Category.UTILITIES, ("DEWA",)),
-    MerchantRule(
-        "emirates", "Emirates", Category.TRAVEL, ("EMIRATES AIRLINE", "EMIRATES AIRLINES")
-    ),
-    MerchantRule("etihad", "Etihad", Category.TRAVEL, ("ETIHAD AIRWAYS", "ETIHAD AIRLINE")),
+    MerchantRule("emirates", "Emirates", Category.TRAVEL, ("EMIRATES",)),
+    MerchantRule("etihad", "Etihad", Category.TRAVEL, ("ETIHAD",)),
     MerchantRule("booking", "Booking.com", Category.TRAVEL, ("BOOKING.COM",)),
 )
 
@@ -77,11 +98,26 @@ def contains(description: str, phrase: str) -> bool:
 
 
 def merchant_match(description: str) -> MerchantRule | None:
+    description = normalize_description(description)
+    description = " ".join(re.sub(r"[._*/-]+", " ", description).split())
+    # Do not mistake unrelated institutions/retailers for airlines.
+    if any(
+        contains(description, phrase)
+        for phrase in (
+            "EMIRATES NBD",
+            "EMIRATES ISLAMIC",
+            "EMIRATES POST",
+            "EMIRATES COOP",
+            "ETIHAD CREDIT",
+            "ETIHAD RAIL",
+        )
+    ):
+        description = re.sub(r"\b(?:EMIRATES|ETIHAD)\b", "", description)
     matches = [
         (len(alias), rule)
         for rule in MERCHANTS
         for alias in rule.aliases
-        if contains(description, alias)
+        if contains(description, re.sub(r"[._*/-]+", " ", alias))
     ]
     # Alias groups explicitly declare specialization, e.g. Uber Eats / Uber.
     if not matches:
@@ -90,6 +126,24 @@ def merchant_match(description: str) -> MerchantRule | None:
     specialized = {code for rule in candidates for code in rule.specializes}
     candidates = {rule for rule in candidates if rule.code not in specialized}
     return next(iter(candidates)) if len(candidates) == 1 else None
+
+
+def described_merchant(description: str) -> str | None:
+    """Conservative fallback for explicitly labeled POS merchants, never used for learning."""
+    # Conflicting known identities must not be repackaged as a single inferred name.
+    if any(contains(description, alias) for rule in MERCHANTS for alias in rule.aliases):
+        return None
+    match = re.fullmatch(r"(?:POS PURCHASE|CARD PURCHASE)\s+(.+)", description)
+    if match is None:
+        return None
+    name = re.sub(r"\s+(?:(?:AE|UAE)\s+)?\d+\s*$", "", match[1])
+    words = name.split()
+    generic = {"POS", "PURCHASE", "CARD", "TRANSACTION", "REF", "REFERENCE", "PAYMENT"}
+    if not 2 <= len(words) <= 6 or any(word in generic for word in words):
+        return None
+    if not all(re.fullmatch(r"[A-Z][A-Z'&-]*", word) for word in words):
+        return None
+    return name.title()[:100]
 
 
 @dataclass(frozen=True)
@@ -213,13 +267,24 @@ class Understanding:
     rule_id: str
 
 
-def understand(raw: str, amount: Decimal) -> Understanding:
+def understand(
+    raw: str, amount: Decimal, preferences: Mapping[str, Category] | None = None
+) -> Understanding:
     description = normalize_description(raw)
     merchant = merchant_match(description)
 
     def result(category: Category, source: str, reason: str, rule: str) -> Understanding:
+        if any(contains(description, phrase) for phrase in RETURNS) and not rule.startswith(
+            "return_"
+        ):
+            rule = "return_" + rule
         return Understanding(
-            description, merchant.name if merchant else None, category, source, reason, rule
+            description,
+            merchant.name if merchant else described_merchant(description),
+            category,
+            source,
+            reason,
+            rule,
         )
 
     def match_group(rules: tuple[CategoryRule, ...]) -> Understanding | None:
@@ -245,6 +310,30 @@ def understand(raw: str, amount: Decimal) -> Understanding:
                 rule.code,
             )
         return None
+
+    if merchant and preferences and merchant.code in preferences:
+        return result(
+            preferences[merchant.code],
+            "user_preference",
+            f"Your saved category for {merchant.name}.",
+            "preference_" + merchant.code,
+        )
+
+    # Specific product lines retain the same merchant identity.
+    specifics = {
+        "amazon": (("AMAZON FRESH", "AMZN FRESH"), Category.GROCERIES),
+        "noon": (("NOON MINUTES", "NOON GROCERY"), Category.GROCERIES),
+        "careem": (("CAREEM FOOD",), Category.DINING),
+    }
+    if merchant and merchant.code in specifics:
+        phrases, specific_category = specifics[merchant.code]
+        if any(contains(re.sub(r"[._*/-]+", " ", description), phrase) for phrase in phrases):
+            return result(
+                specific_category,
+                "description_rule",
+                f"Specific product matched for {merchant.name}.",
+                "specific_" + merchant.code,
+            )
 
     # Returns must never become income, fees or a newly inferred transfer.
     if any(contains(description, phrase) for phrase in RETURNS):
