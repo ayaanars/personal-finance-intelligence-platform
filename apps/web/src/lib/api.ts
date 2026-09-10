@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { intelligenceSchema, overviewSchema } from "./analytics";
 import { unusualSchema } from "./unusual";
+import { relationshipsSchema } from "./relationships";
 
 export const categories = [
   "Income",
@@ -191,6 +192,9 @@ async function mutate<T>(
   });
 }
 export const api = {
+  relationships: (month?: string) => request(
+    `/analytics/relationships${month ? `?month=${encodeURIComponent(month)}` : ""}`, relationshipsSchema,
+  ),
   unusual: (month?: string) => request(
     `/analytics/unusual${month ? `?month=${encodeURIComponent(month)}` : ""}`, unusualSchema,
   ),

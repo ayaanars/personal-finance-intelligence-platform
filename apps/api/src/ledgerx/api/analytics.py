@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ledgerx.api.auth_security import Authenticated
 from ledgerx.modules.analytics.intelligence_service import IntelligenceOverview, intelligence
+from ledgerx.modules.analytics.relationships import RelationshipsReport, relationships
 from ledgerx.modules.analytics.schemas import Overview
 from ledgerx.modules.analytics.service import overview
 from ledgerx.modules.analytics.unusual import UnusualReport, unusual
@@ -40,3 +41,10 @@ def get_intelligence(
 @router.get("/unusual")
 def get_unusual(context: Authenticated, query: Annotated[OverviewQuery, Query()]) -> UnusualReport:
     return unusual(context.db, context.principal, query.month)
+
+
+@router.get("/relationships")
+def get_relationships(
+    context: Authenticated, query: Annotated[OverviewQuery, Query()]
+) -> RelationshipsReport:
+    return relationships(context.db, context.principal, query.month)

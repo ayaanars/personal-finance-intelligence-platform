@@ -45,7 +45,7 @@ class IntelligenceOverview(BaseModel):
 
 
 def load_history(
-    db: Session, principal: Principal, month: str | None
+    db: Session, principal: Principal, month: str | None, *, history_months: Literal[6, 14] = 6
 ) -> tuple[str | None, list[str], dict[str, list[Observation]]]:
     owned = owned_query(principal)
     period = func.to_char(Fact.transaction_date, "YYYY-MM")
@@ -56,7 +56,7 @@ def load_history(
     if selected_text is None:
         return None, [], {}
     selected = date.fromisoformat(selected_text + "-01")
-    start = shift_month(selected, -6)
+    start = shift_month(selected, -history_months)
     end = date(selected.year, selected.month, calendar.monthrange(selected.year, selected.month)[1])
     query = owned.outerjoin(
         Enrichment, (Enrichment.transaction_id == Fact.id) & (Enrichment.user_id == Fact.user_id)

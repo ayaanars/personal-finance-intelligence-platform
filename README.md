@@ -9,6 +9,9 @@ merchant outflow, recent trends and explainable changes over time.
 Phase 12 adds richer change visualizations, personal baselines, likely recurring
 patterns, selectable trends, date patterns, purchase statistics, merchant momentum
 and movement signals. Methodologies are in [ADR 0009](docs/adr/0009-longitudinal-intelligence.md).
+Phase 15 adds `/app/relationships`: five focused, currency-separated associations,
+paired charts and exact evidence, with one compact finding on Insights. History
+thresholds and non-causal methodology are in [ADR 0011](docs/adr/0011-longitudinal-relationships.md).
 The implemented CSV contract is documented in [API.md](docs/API.md) and
 [ADR 0004](docs/adr/0004-canonical-csv-import.md).
 
