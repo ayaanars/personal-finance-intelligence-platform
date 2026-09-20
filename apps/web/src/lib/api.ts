@@ -1,3 +1,4 @@
+import { planSchema, type GoalInput } from "./goals";
 import { z } from "zod";
 import { intelligenceSchema, overviewSchema } from "./analytics";
 import { unusualSchema } from "./unusual";
@@ -194,6 +195,9 @@ async function mutate<T>(
   });
 }
 export const api = {
+  plan: (month?: string) => request(`/goals${month ? `?month=${encodeURIComponent(month)}` : ""}`, planSchema),
+  removeGoal: (body: Omit<GoalInput, "target" | "active">) => mutate("/goals", z.undefined(), {method:"DELETE", body:JSON.stringify(body)}),
+  saveGoal: (body: GoalInput) => mutate("/goals", z.undefined(), {method:"PUT", body:JSON.stringify(body)}),
   relationships: (month?: string) => request(
     `/analytics/relationships${month ? `?month=${encodeURIComponent(month)}` : ""}`, relationshipsSchema,
   ),

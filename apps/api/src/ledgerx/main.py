@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from ledgerx.api.analytics import router as analytics_router
 from ledgerx.api.auth import router as auth_router
+from ledgerx.api.goals import router as goals_router
 from ledgerx.api.health import router
 from ledgerx.api.imports import router as imports_router
 from ledgerx.api.transactions import router as transactions_router
@@ -53,4 +54,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(imports_router)
     app.include_router(transactions_router)
     app.include_router(analytics_router)
+    app.include_router(goals_router)
     return app

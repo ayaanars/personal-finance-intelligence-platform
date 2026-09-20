@@ -26,7 +26,7 @@ export function Shell({ children }: {
         setBusy(false);
     } }
     const groups = [
-        { name: "Intelligence", links: [["/app", "Overview", "◈"], ["/app/insights", "Insights", "✦"], ["/app/trends", "Trends", "↗"], ["/app/unusual", "Unusual activity", "◇"], ["/app/relationships", "Relationships", "⋈"], ["/app/recurring", "Recurring", "↻"], ["/app/behaviour", "Behaviour", "≋"]] },
+        { name: "Intelligence", links: [["/app", "Overview", "◈"], ["/app/insights", "Insights", "✦"], ["/app/trends", "Trends", "↗"], ["/app/unusual", "Unusual activity", "◇"], ["/app/relationships", "Relationships", "⋈"], ["/app/goals", "Goals & Forecast", "◎"], ["/app/recurring", "Recurring", "↻"], ["/app/behaviour", "Behaviour", "≋"]] },
         { name: "Data", links: [["/app/transactions", "Transactions", "☷"], ["/app/import", "Import statement", "+"]] },
     ];
     const links = groups.flatMap(group => group.links);

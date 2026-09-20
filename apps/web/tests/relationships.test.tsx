@@ -64,7 +64,7 @@ it("groups all routes in the requested navigation order", () => {
     const primary = screen.getByRole("navigation", { name: "Primary" });
     const intelligence = within(primary).getByRole("group", { name: "Intelligence" });
     expect(within(intelligence).getAllByRole("link").map(link => link.getAttribute("href"))).toEqual([
-        "/app", "/app/insights", "/app/trends", "/app/unusual", "/app/relationships", "/app/recurring", "/app/behaviour",
+        "/app", "/app/insights", "/app/trends", "/app/unusual", "/app/relationships", "/app/goals", "/app/recurring", "/app/behaviour",
     ]);
     expect(within(within(primary).getByRole("group", { name: "Data" })).getAllByRole("link").map(link => link.getAttribute("href"))).toEqual(["/app/transactions", "/app/import"]);
     expect(screen.getByRole("link", { name: "Relationships" })).toHaveAttribute("aria-current", "page");
