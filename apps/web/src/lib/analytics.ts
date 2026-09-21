@@ -73,7 +73,7 @@ export const intelligenceSchema = overviewSchema.extend({
     recurring: z.object({
       state: z.enum(["likely_recurring", "insufficient_history", "insufficient_evidence", "no_activity"]),
       payments: z.array(recurringPayment),
-      candidates: z.array(z.object({merchant: z.string(), reason: z.enum(["fewer_than_three_months", "multiple_charges", "timing_not_regular", "amounts_vary"])})).max(5),
+      candidates: z.array(z.object({observed_months: z.number().int().nonnegative().optional(), current_amount: money.optional(), evidence: z.array(z.object({identifier:z.uuid(), day:z.string(), amount:money})).max(5).optional(), merchant: z.string(), reason: z.enum(["fewer_than_three_months", "multiple_charges", "timing_not_regular", "amounts_vary"])})).max(5),
       monthly_estimate: money, annual_estimate: money, matched_spending: money, other_spending: money,
       matched_share_percent: percent.nullable(), method: z.string(),
     }),

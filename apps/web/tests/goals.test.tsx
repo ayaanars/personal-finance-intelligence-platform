@@ -14,6 +14,7 @@ it("renders forecast, goal progress, quality and readable recurring evidence", a
     expect(screen.getByText("On track")).toBeVisible();
     expect(screen.getByRole("img")).toHaveAttribute("aria-label", expect.stringContaining("projected ≈ 6,400 AED"));
     expect(screen.getByText(/Early estimate/)).toBeVisible();
+    expect(screen.getByText(/Limited-history forecast/)).toBeVisible();
     expect(screen.getByText(/20 September 2026/)).toBeVisible();
     expect(screen.queryByText("2026-09-20")).not.toBeInTheDocument();
 });

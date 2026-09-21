@@ -10,7 +10,7 @@ const amount = (value: string, currency: string) => displayMoney(value, currency
 
 export function BehaviourStory({ data }: { data: IntelligenceCurrency }) {
   const [pattern, setPattern] = useState<"week" | "month">("week");
-  const [view, setView] = useState<"merchants" | "categories" | "purchases" | "new">("merchants");
+  const [view, setView] = useState<"merchants" | "categories" | "purchases" | "new">(data.comparison.state === "available" ? "merchants" : "purchases");
   const b = data.behaviour;
   const changes = view === "categories" ? data.comparison.categories : b.merchant_changes;
   const patterns = pattern === "week" ? b.weekday_weekend : b.month_parts;
@@ -53,7 +53,7 @@ export function BehaviourStory({ data }: { data: IntelligenceCurrency }) {
           <div><strong>{row.name}</strong><span>{displayMoney(row.delta, data.currency)}</span></div>
           <div className={`driver-bar ${row.delta.startsWith("-") ? "decrease" : "increase"}`} aria-hidden="true" style={{ width: `${row.scale_percent}%` }} />
           <span>{amount(row.previous, data.currency)} → {amount(row.current, data.currency)}</span>
-        </li>)}</ol> : <p className="history-message">Merchant momentum needs activity in both months.</p>}
+        </li>)}</ol> : <p className="notice">History-based momentum needs activity in two adjacent months. Current purchase details remain available.</p>}
       </> : view === "purchases" ? <ol className="purchase-list">{b.largest_purchases.length ? b.largest_purchases.map((row) => <li key={row.identifier}>
         <div><Link href={`/app/transactions/${row.identifier}`}>{row.merchant ?? "Unknown merchant"}</Link><p>{dateLabel(row.day)} · {row.category}</p></div><strong>{amount(row.amount, data.currency)}</strong>
       </li>) : <li>No purchases in this month.</li>}</ol> : <>

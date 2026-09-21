@@ -63,6 +63,27 @@ const rowSchema = z.object({
   currency: z.string().nullable(),
   errors: z.array(z.object({ code: z.string(), message: z.string() })),
 });
+export const mappingSchema = z.object({
+  transaction_date: z.string(), description: z.string(),
+  amount_mode: z.enum(["single", "debit_credit"]),
+  amount: z.string().nullable(), debit: z.string().nullable(), credit: z.string().nullable(),
+  currency: z.string().nullable(), fixed_currency: z.enum(["AED", "USD", "EUR", "GBP"]).nullable(),
+  date_format: z.enum(["YYYY-MM-DD", "DD/MM/YYYY", "MM/DD/YYYY", "DD-MM-YYYY"]),
+});
+export type ColumnMapping = z.infer<typeof mappingSchema>;
+const profileSchema = z.object({id: z.uuid(), name: z.string(), mapping: mappingSchema});
+const inspectionSchema = z.object({
+  recognition: z.object({source:z.enum(["automatic","profile","reviewed"]).optional(), state: z.enum(["recognized", "needs_confirmation", "needs_mapping"]), mapping: mappingSchema.nullable(), questions: z.array(z.string()), evidence: z.array(z.string()), profile_name: z.string().nullable()}),
+  headers: z.array(z.string()).max(64), suggestions: z.record(z.string(), z.string()),
+  date_formats: z.array(z.string()), profiles: z.array(profileSchema).max(50),
+  samples: z.array(z.object({source_row_number: z.number().int(), source: z.array(z.string()), normalized: rowSchema.nullable()})).max(10),
+  total_rows: z.number().int(), invalid_rows: z.number().int().nullable(),
+});
+export type Inspection = z.infer<typeof inspectionSchema>;
+// HTTP headers are ASCII; preserve non-Latin column names as JSON Unicode escapes.
+const mappingHeader = (mapping: ColumnMapping) => JSON.stringify(mapping).replace(
+  /[^\x20-\x7E]/g, (character) => `\\u${character.charCodeAt(0).toString(16).padStart(4, "0")}`,
+);
 export const rowPageSchema = z.object({
   items: z.array(rowSchema).max(100),
   next_after_row: z.number().int().nullable(),
@@ -79,6 +100,7 @@ export const importSchema = z.object({
   currencies: z.array(z.string()),
   expires_at: z.string(),
   can_finalize: z.boolean(),
+  can_save_mapping: z.boolean().optional(),
   rows: rowPageSchema,
 });
 const finalizeSchema = z.object({
@@ -94,6 +116,12 @@ export type RowPage = z.infer<typeof rowPageSchema>;
 export type Category = (typeof categories)[number];
 
 const messages: Record<string, string> = {
+  MAPPING_INVALID: "Select distinct source columns, an amount mode, currency, and date format.",
+  CSV_HEADERS_INVALID: "Column names must be unique, nonblank, and no longer than 120 characters (64 columns maximum).",
+  PROFILE_NAME_USED: "That profile name is already used for a different mapping. Choose another name.",
+  PROFILE_NOT_READY: "A valid mapped import is required before saving a profile.",
+  PROFILE_LIMIT: "This workspace has reached its 50-profile limit.",
+  DATE_INVALID: "Check the dates and selected date format.",
   INVALID_CREDENTIALS: "Email or password did not match. Please try again.",
   REGISTRATION_FAILED:
     "We couldn't create this account. Check your details or try signing in.",
@@ -121,7 +149,7 @@ export class ApiError extends Error {
         (status === 413
           ? "The CSV exceeds the 5 MiB or 25,000-row limit."
           : status === 422
-            ? "The CSV or request could not be read. Check the canonical format and try again."
+            ? "The CSV or request could not be read. Check the file and mapping choices and try again."
             : status === 404
               ? "This record is unavailable. Return to your history or upload a new statement."
               : status === 409
@@ -236,13 +264,21 @@ export const api = {
       headers: { "If-Match": `"${transaction.version}"` },
       body: JSON.stringify({ category, ...(preference !== "keep" ? { merchant_preference: preference } : {}) }),
     }),
-  upload: (file: File, key: string) =>
+  inspect: (file: File, mapping?: ColumnMapping) => mutate("/imports/inspect", inspectionSchema, {
+    method: "POST", headers: {"Content-Type": "text/csv", "X-Filename": "statement.csv",
+      ...(mapping ? {"X-Column-Mapping": mappingHeader(mapping)} : {})}, body: file,
+  }),
+  saveMappingProfile: (id: string, name: string) => mutate("/imports/profiles", profileSchema, {
+    method: "POST", body: JSON.stringify({import_id: id, name}),
+  }),
+  upload: (file: File, key: string, mapping?: ColumnMapping) =>
     mutate("/imports", importSchema, {
       method: "POST",
       headers: {
         "Content-Type": "text/csv",
         "X-Filename": "statement.csv",
         "Idempotency-Key": key,
+        ...(mapping ? {"X-Column-Mapping": mappingHeader(mapping)} : {}),
       },
       body: file,
     }),

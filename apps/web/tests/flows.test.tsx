@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, type Inspection } from "@/lib/api";
 import { AuthForm } from "@/components/auth-form";
 import { Landing } from "@/components/landing";
 import { UploadStatement, PreviewStatement } from "@/features/imports";
@@ -101,25 +101,37 @@ it("revokes session before clearing private state and redirecting", async () => 
   expect(mocks.clear).toHaveBeenCalledOnce();
   expect(mocks.replace).toHaveBeenCalledWith("/login");
 });
-it("uploads only on submit and retains the key across uncertain retries", async () => {
+const inspection: Inspection = {
+  recognition: {state:"needs_mapping", mapping:null, questions:[], evidence:[], profile_name:null},
+  headers: ["Date", "Details", "Amount", "CCY"],
+  suggestions: {transaction_date: "Date", description: "Details", amount: "Amount", currency: "CCY"},
+  date_formats: ["YYYY-MM-DD"], profiles: [], total_rows: 1, invalid_rows: null,
+  samples: [{source_row_number: 2, source: ["2026-09-01", "Synthetic", "1", "AED"], normalized: null}],
+};
+const checkedInspection: Inspection = {...inspection, recognition:{...inspection.recognition, state:"recognized"}, invalid_rows: 0, samples: [{...inspection.samples[0], normalized: preview.rows.items[0]}]};
+it("inspects and previews before staging, retaining mapping and key across uncertain retries", async () => {
+  vi.spyOn(api, "inspect").mockResolvedValueOnce(inspection).mockResolvedValue(checkedInspection);
   const upload = vi
     .spyOn(api, "upload")
     .mockRejectedValueOnce(new ApiError(0, "NETWORK_ERROR"))
     .mockResolvedValue(preview);
+  vi.spyOn(api, "finalize").mockResolvedValue({id, status:"completed", accepted_rows:1, finalized_at:"2026-09-21"});
   render(<UploadStatement />);
   const user = userEvent.setup();
   await user.upload(
-    screen.getByLabelText("Drop a CSV here, or choose a file"),
+    screen.getByLabelText("Choose your statement"),
     new File(["synthetic csv"], "test.csv", { type: "text/csv" }),
   );
   expect(upload).not.toHaveBeenCalled();
-  await user.click(screen.getByRole("button", { name: "Review statement" }));
+  await user.click(await screen.findByRole("button", { name: "Preview normalized rows" }));
+  await user.click(await screen.findByRole("button", { name: "Confirm import" }));
   expect(await screen.findByRole("alert")).toHaveTextContent("retry");
   await user.click(screen.getByRole("button", { name: "Retry same upload" }));
   await waitFor(() =>
     expect(mocks.push).toHaveBeenCalledWith(`/app/import/${id}`),
   );
   expect(upload.mock.calls[0][1]).toBe(upload.mock.calls[1][1]);
+  expect(upload.mock.calls[0][2]).toEqual(upload.mock.calls[1][2]);
 });
 it("blocks the whole invalid import and shows row reasons", async () => {
   vi.spyOn(api, "preview").mockResolvedValue({
@@ -250,25 +262,29 @@ it("refetches conflicts before allowing another save", async () => {
   expect(save).toHaveBeenCalledOnce();
 });
 it("allows replacing a CSV rejected by the parser without retrying different bytes under the same key", async () => {
+  vi.spyOn(api, "inspect").mockResolvedValueOnce(inspection).mockResolvedValue(checkedInspection);
   const upload = vi
     .spyOn(api, "upload")
     .mockRejectedValueOnce(new ApiError(422, "VALIDATION_ERROR"))
     .mockResolvedValue(preview);
+  vi.spyOn(api, "finalize").mockResolvedValue({id, status:"completed", accepted_rows:1, finalized_at:"2026-09-21"});
   render(<UploadStatement />);
   const user = userEvent.setup();
   await user.upload(
-    screen.getByLabelText("Drop a CSV here, or choose a file"),
+    screen.getByLabelText("Choose your statement"),
     new File(["bad headers"], "bad.csv", { type: "text/csv" }),
   );
-  await user.click(screen.getByRole("button", { name: "Review statement" }));
+  await user.click(await screen.findByRole("button", { name: "Preview normalized rows" }));
+  await user.click(await screen.findByRole("button", { name: "Confirm import" }));
   expect(await screen.findByRole("alert")).toBeInTheDocument();
   await user.upload(
-    screen.getByLabelText("bad.csv"),
+    screen.getByLabelText("Choose your statement"),
     new File(["corrected synthetic csv"], "corrected.csv", {
       type: "text/csv",
     }),
   );
-  await user.click(screen.getByRole("button", { name: "Review statement" }));
+
+  await user.click(await screen.findByRole("button", { name: "Confirm import" }));
   await waitFor(() => expect(upload).toHaveBeenCalledTimes(2));
   expect(upload.mock.calls[0][1]).not.toBe(upload.mock.calls[1][1]);
 });
@@ -318,4 +334,69 @@ it("refreshes automatic metadata without clearing the selected correction", asyn
   await waitFor(() => expect(refresh).toHaveBeenCalledWith(corrected));
   expect(screen.getByLabelText("Category")).toHaveValue("Travel");
   expect(await screen.findByRole("status")).toHaveTextContent("corrections are preserved");
+});
+
+it("requires ambiguous date confirmation and invalidates preview when mapping changes", async () => {
+  vi.spyOn(api, "inspect").mockResolvedValueOnce({...inspection, date_formats: ["DD/MM/YYYY", "MM/DD/YYYY"]}).mockResolvedValue(checkedInspection);
+  const upload = vi.spyOn(api, "upload").mockResolvedValue(preview);
+  vi.spyOn(api, "finalize").mockResolvedValue({id, status:"completed", accepted_rows:1, finalized_at:"2026-09-21"});
+  render(<UploadStatement />);
+  const user = userEvent.setup();
+  await user.upload(screen.getByLabelText("Choose your statement"), new File(["synthetic"], "test.csv"));
+  expect(await screen.findByRole("button", {name: "Preview normalized rows"})).toBeDisabled();
+  await user.selectOptions(screen.getByLabelText("Date format"), "DD/MM/YYYY");
+  await user.click(screen.getByRole("button", {name: "Preview normalized rows"}));
+  await screen.findByRole("button", {name: "Confirm import"});
+  await user.click(screen.getByRole("button", {name:"Review mapping"}));
+  await user.selectOptions(screen.getByLabelText("Date format"), "MM/DD/YYYY");
+  expect(screen.queryByRole("button", {name: "Confirm import"})).not.toBeInTheDocument();
+  expect(upload).not.toHaveBeenCalled();
+});
+it("saves only a named mapping after successful mapping", async () => {
+  vi.spyOn(api, "preview").mockResolvedValue({...preview, can_save_mapping: true});
+  const save = vi.spyOn(api, "saveMappingProfile").mockResolvedValue({id, name: "Synthetic CSV", mapping: {transaction_date:"Date",description:"Details",amount_mode:"single",amount:"Amount",debit:null,credit:null,currency:"CCY",fixed_currency:null,date_format:"YYYY-MM-DD"}});
+  render(<PreviewStatement id={id} />);
+  await userEvent.type(await screen.findByLabelText("Profile name"), "Synthetic CSV");
+  await userEvent.click(screen.getByRole("button", {name: "Save mapping"}));
+  await screen.findByText("Mapping saved as Synthetic CSV.");
+  expect(save).toHaveBeenCalledWith(id, "Synthetic CSV");
+});
+
+it("shows automatic preview without manual mapping and finalizes only on confirmation", async () => {
+  const mapping = {transaction_date:"Date",description:"Details",amount_mode:"single" as const,amount:"Amount",debit:null,credit:null,currency:"CCY",fixed_currency:null,date_format:"YYYY-MM-DD" as const};
+  vi.spyOn(api,"inspect").mockResolvedValue({...checkedInspection, recognition:{state:"recognized",mapping,questions:[],evidence:["Unique columns"],profile_name:"Synthetic saved profile"}});
+  const upload = vi.spyOn(api,"upload").mockResolvedValue(preview);
+  const finalize = vi.spyOn(api,"finalize").mockResolvedValue({id,status:"completed",accepted_rows:1,finalized_at:"2026-09-21"});
+  render(<UploadStatement />);
+  await userEvent.upload(screen.getByLabelText("Choose your statement"),new File(["synthetic"],"test.csv"));
+  await screen.findByText("Recognized automatically");
+  expect(screen.getByText(/Applied saved mapping/)).toBeVisible();
+  expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+  expect(upload).not.toHaveBeenCalled(); expect(finalize).not.toHaveBeenCalled();
+  await userEvent.click(screen.getByRole("button",{name:"Confirm import"}));
+  await waitFor(()=>expect(finalize).toHaveBeenCalledWith(id,id));
+  expect(upload.mock.calls[0][2]).toEqual(mapping);
+});
+it("asks only for the date format when the other columns are recognized", async () => {
+  vi.spyOn(api,"inspect").mockResolvedValue({...inspection, recognition:{state:"needs_confirmation",mapping:null,questions:["date_format"],evidence:[],profile_name:null},date_formats:["DD/MM/YYYY","MM/DD/YYYY"]});
+  render(<UploadStatement />);
+  await userEvent.upload(screen.getByLabelText("Choose your statement"),new File(["synthetic"],"test.csv"));
+  expect(await screen.findByLabelText("Date format")).toHaveValue("");
+  expect(screen.getAllByRole("combobox")).toHaveLength(1);
+  expect(screen.queryByRole("button",{name:"Confirm import"})).not.toBeInTheDocument();
+});
+
+it("keeps the file and mapping locked when finalize fails after staging", async () => {
+  vi.spyOn(api,"inspect").mockResolvedValue({...checkedInspection,recognition:{...checkedInspection.recognition,state:"recognized"}});
+  const upload = vi.spyOn(api,"upload").mockResolvedValue(preview);
+  const finalize = vi.spyOn(api,"finalize").mockRejectedValueOnce(new ApiError(403,"CSRF_INVALID")).mockResolvedValue({id,status:"completed",accepted_rows:1,finalized_at:"2026-09-21"});
+  render(<UploadStatement />);
+  await userEvent.upload(screen.getByLabelText("Choose your statement"),new File(["synthetic"],"test.csv"));
+  await userEvent.click(await screen.findByRole("button",{name:"Confirm import"}));
+  await screen.findByRole("alert");
+  expect(screen.getByLabelText("Choose your statement")).toBeDisabled();
+  await userEvent.click(screen.getByRole("button",{name:"Retry same upload"}));
+  await waitFor(()=>expect(finalize).toHaveBeenCalledTimes(2));
+  expect(finalize.mock.calls).toEqual([[id,id],[id,id]]);
+  expect(upload.mock.calls[0][1]).toBe(upload.mock.calls[1][1]);
 });

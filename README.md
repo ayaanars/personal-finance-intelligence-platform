@@ -203,3 +203,23 @@ apply to future imports and explicit reprocessing; individual corrections take
 priority. Refresh automatic details uses current deterministic merchant mappings
 without changing imported financial facts. See [ADR 0012](docs/adr/0012-merchant-intelligence.md)
 for precedence, catalog confidence, migration and historical-data behavior.
+
+
+## Phase 18 flexible statement imports
+
+Upload a UTF-8 CSV with renamed/reordered columns, review suggested or saved column
+mappings, choose a date format and currency source, inspect normalized samples,
+and explicitly finalize. Single signed amounts and unsigned debit/credit columns
+are supported. Saved profiles are private to the user/workspace. XLSX is deferred.
+Apply migration `0008_import_mapping` before using the updated API. See
+[ADR 0014](docs/adr/0014-flexible-csv-mapping.md) and [API](docs/API.md).
+
+
+## Phase 19 automatic recognition and first-month views
+
+Recognized CSV layouts and compatible saved profiles open directly in normalized
+preview. Ambiguous date, currency or sign choices receive focused questions;
+Review mapping stays available. Confirm import explicitly stages and finalizes.
+Current-period totals, composition and behaviour remain useful with one month;
+only historical comparisons show developing states. See
+[ADR 0015](docs/adr/0015-automatic-import-and-partial-history.md).

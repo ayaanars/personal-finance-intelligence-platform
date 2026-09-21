@@ -29,6 +29,7 @@ class Evidence(BaseModel):
 
 
 class Anomaly(BaseModel):
+    basis: Literal["historical", "current_month"] = "historical"
     identifier: str
     subject: str
     day: str | None = None
@@ -52,7 +53,7 @@ class UnusualReport(BaseModel):
     month: str | None
     available_months: list[str]
     currencies: list[UnusualCurrency]
-    methodology_version: Literal["unusual-v1"] = "unusual-v1"
+    methodology_version: Literal["unusual-v2"] = "unusual-v2"
     coverage_note: str = (
         "Advisory comparisons with your own imported history, not fraud findings. "
         "Partial or overlapping statements can change the evidence. Currency views are separate. "
@@ -88,11 +89,17 @@ def evaluate(rows: list[Observation], selected: date, currency: str) -> UnusualC
             day: str | None = None,
             unit: Literal["money", "count"] = "money",
             high: bool = False,
+            basis: Literal["historical", "current_month"] = "historical",
         ) -> None:
             item = items.setdefault(
                 key,
                 Anomaly(
-                    identifier=key, subject=subject, day=day, evidence=[], transaction_ids=ids[:5]
+                    identifier=key,
+                    subject=subject,
+                    day=day,
+                    evidence=[],
+                    transaction_ids=ids[:5],
+                    basis=basis,
                 ),
             )
             item.transaction_ids = list(dict.fromkeys(item.transaction_ids + ids))[:5]
@@ -113,6 +120,28 @@ def evaluate(rows: list[Observation], selected: date, currency: str) -> UnusualC
             if high:
                 item.severity = "High"
             item.ml_supported = any(identifier in supported for identifier in ids)
+
+        # Descriptive peer comparison, not a claim about this user's personal normal.
+        # Keep scarce evidence quiet; no ML, novelty, or recurring inference from one month.
+        if not enough and len(current) >= 6:
+            current_median = median([-r.amount for r in current])
+            current_total = sum((-r.amount for r in current), ZERO)
+            for row in current:
+                value = -row.amount
+                if value >= current_median * 4 and value >= current_total / 4:
+                    add(
+                        row.identifier,
+                        row.merchant or row.category,
+                        "current_month_large_purchase",
+                        "At least 4× this month's median purchase and 25% of this month's spending "
+                        "across at least six purchases. Current-month comparison only, not a "
+                        "historical anomaly or fraud finding.",
+                        value,
+                        current_median,
+                        [row.identifier],
+                        row.day.isoformat(),
+                        basis="current_month",
+                    )
 
         if enough:
             typical = median([-r.amount for r in history])

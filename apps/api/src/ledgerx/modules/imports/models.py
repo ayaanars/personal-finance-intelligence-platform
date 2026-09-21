@@ -15,7 +15,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ledgerx.db.base import Base
@@ -73,6 +73,27 @@ class StatementImport(IdentityMixin, CreatedAtMixin, Base):
     currencies: Mapped[list[str]] = mapped_column(ARRAY(CHAR(3)))
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     finalized_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    mapping_spec: Mapped[dict[str, object] | None] = mapped_column(JSONB)
+    source_headers: Mapped[list[str] | None] = mapped_column(ARRAY(String(120)))
+
+
+class MappingProfile(IdentityMixin, CreatedAtMixin, Base):
+    __tablename__ = "import_mapping_profiles"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["user_id", "workspace_id"],
+            ["workspaces.owner_user_id", "workspaces.id"],
+            ondelete="RESTRICT",
+            name="fk_import_mapping_profiles_owner",
+        ),
+        UniqueConstraint("user_id", "workspace_id", "name", name="uq_import_mapping_profiles_name"),
+        CheckConstraint("btrim(name) <> ''", name="name"),
+    )
+    user_id: Mapped[UUID]
+    workspace_id: Mapped[UUID]
+    name: Mapped[str] = mapped_column(String(80))
+    source_headers: Mapped[list[str]] = mapped_column(ARRAY(String(120)))
+    mapping_spec: Mapped[dict[str, object]] = mapped_column(JSONB)
 
 
 class ImportRow(IdentityMixin, CreatedAtMixin, Base):

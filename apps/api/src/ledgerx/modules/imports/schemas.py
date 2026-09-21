@@ -41,6 +41,7 @@ class ImportView(BaseModel):
     expires_at: datetime
     finalized_at: datetime | None
     can_finalize: bool
+    can_save_mapping: bool = False
     rows: RowPage
 
 

@@ -69,3 +69,13 @@ it("groups all routes in the requested navigation order", () => {
     expect(within(within(primary).getByRole("group", { name: "Data" })).getAllByRole("link").map(link => link.getAttribute("href"))).toEqual(["/app/transactions", "/app/import"]);
     expect(screen.getByRole("link", { name: "Relationships" })).toHaveAttribute("aria-current", "page");
 });
+
+it("keeps current composition visible while one-month relationships develop", async () => {
+  vi.spyOn(api,"relationships").mockResolvedValue({...report, currencies:report.currencies.map(c=>({...c,state:"insufficient_history" as const,items:[],observed_months:["2026-09"]}))});
+  vi.spyOn(api,"intelligence").mockResolvedValue(overview);
+  render(<Relationships />);
+  expect(await screen.findByText("Here’s what we know now")).toBeVisible();
+  expect(screen.getByText("Category composition")).toBeVisible();
+  expect(screen.getByText("More history is needed")).toBeVisible();
+  expect(screen.queryByText(item.interpretation)).not.toBeInTheDocument();
+});

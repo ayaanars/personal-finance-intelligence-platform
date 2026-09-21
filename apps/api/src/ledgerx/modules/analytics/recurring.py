@@ -5,7 +5,7 @@ from datetime import date
 from decimal import ROUND_HALF_EVEN, Decimal, localcontext
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ledgerx.modules.analytics.calculations import ZERO, money, month_name, percent, shift_month
 from ledgerx.modules.analytics.intelligence import Observation
@@ -39,6 +39,9 @@ CandidateReason = Literal[
 class Candidate(BaseModel):
     merchant: str
     reason: CandidateReason
+    observed_months: int = 0
+    current_amount: str = "0.0000"
+    evidence: list[RecurringEvidence] = Field(default_factory=list)
 
 
 class RecurringReport(BaseModel):
@@ -98,7 +101,25 @@ def recurring(rows: list[Observation], selected: date) -> RecurringReport:
                 continue
             evidence, reason = evaluate(merchant, selected)
             if reason is not None:
-                candidates.append(Candidate(merchant=merchant, reason=reason))
+                current_entries = sorted(
+                    grouped[merchant][selected_month], key=lambda row: (row.day, row.identifier)
+                )
+                candidates.append(
+                    Candidate(
+                        merchant=merchant,
+                        reason=reason,
+                        observed_months=sum(month <= selected_month for month in grouped[merchant]),
+                        current_amount=money(sum((-r.amount for r in current_entries), ZERO)),
+                        evidence=[
+                            RecurringEvidence(
+                                identifier=r.identifier,
+                                day=r.day.isoformat(),
+                                amount=money(-r.amount),
+                            )
+                            for r in current_entries[:5]
+                        ],
+                    )
+                )
                 continue
             median = sorted(-row.amount for row in evidence)[1]
             previous_start = month_name(shift_month(selected, -3))

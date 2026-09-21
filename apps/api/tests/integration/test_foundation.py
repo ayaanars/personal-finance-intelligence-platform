@@ -224,7 +224,7 @@ def test_composite_key_rejects_cross_owner_child(db: Connection) -> None:
 
 def test_migration_cycle_and_schema(db: Connection) -> None:
     config = migration_config(db)
-    assert ScriptDirectory.from_config(config).get_heads() == ["0007_monthly_goals"]
+    assert ScriptDirectory.from_config(config).get_heads() == ["0008_import_mapping"]
     assert set(inspect(db).get_table_names()) == {
         "alembic_version",
         "users",
@@ -240,9 +240,10 @@ def test_migration_cycle_and_schema(db: Connection) -> None:
         "transaction_audit_events",
         "merchant_preferences",
         "monthly_goals",
+        "import_mapping_profiles",
     }
     command.check(config)
-    assert db.scalar(text("SELECT version_num FROM alembic_version")) == "0007_monthly_goals"
+    assert db.scalar(text("SELECT version_num FROM alembic_version")) == "0008_import_mapping"
     for table in ("users", "workspaces"):
         assert all(not column["nullable"] for column in inspect(db).get_columns(table))
     command.downgrade(config, "0001_foundation")

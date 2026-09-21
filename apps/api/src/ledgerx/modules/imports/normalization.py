@@ -11,9 +11,11 @@ from ledgerx.modules.imports.parser import Candidate
 
 CURRENCIES = frozenset({"AED", "USD", "EUR", "GBP"})
 ERROR_MESSAGES = {
-    "COLUMN_COUNT_INVALID": "Use exactly four canonical columns",
+    "COLUMN_COUNT_INVALID": "Row must contain the same number of columns as the header",
     "FIELD_TOO_LONG": "Fields must not exceed 4096 UTF-8 bytes",
-    "DATE_INVALID": "Use a valid YYYY-MM-DD date",
+    "DATE_INVALID": "Invalid date for the selected date format",
+    "DEBIT_CREDIT_BOTH": "Both debit and credit are populated; leave the unused column blank",
+    "DEBIT_CREDIT_INVALID": "Use an unsigned debit or credit amount; signed values need review",
     "DESCRIPTION_INVALID": "Use a nonblank description of at most 500 characters",
     "AMOUNT_INVALID": "Use a nonzero signed decimal with up to 16 integer and 4 fractional digits",
     "CURRENCY_UNSUPPORTED": "Use AED, USD, EUR or GBP in uppercase",

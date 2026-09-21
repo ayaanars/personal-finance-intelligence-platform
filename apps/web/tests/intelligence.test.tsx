@@ -75,3 +75,26 @@ it("plots exact high precision geometry with negative values and explicit gaps",
     await userEvent.click(screen.getByRole('button', { name: 'July 2026: −10.00 AED' }));
     await waitFor(() => expect(screen.getAllByText('−10.00 AED').length).toBeGreaterThan(0));
 });
+
+it.each(["overview", "insights", "trends", "behaviour", "recurring"] as const)("keeps %s useful with one month and no invented comparisons", async (page) => {
+  const first = {...data, available_months:["2026-09"], currencies:data.currencies.map(c=>({...c,
+    comparison:{...c.comparison,state:"insufficient_history" as const,metrics:[],categories:[]},insights:[],trend:c.trend.slice(-1),
+    baselines:{...c.baselines,observed_months:1},
+    recurring:{...c.recurring,candidates:[{merchant:"Synthetic subscription candidate",reason:"fewer_than_three_months" as const,observed_months:1,current_amount:"20.0000",evidence:[]}]},
+  }))};
+  vi.spyOn(api,"intelligence").mockResolvedValue(first);
+  render(<IntelligencePage page={page} />);
+  await screen.findByRole("heading",{level:1,name:page[0].toUpperCase()+page.slice(1)});
+  if(page === "behaviour") {
+    expect(await screen.findByText("Average purchase")).toBeVisible();
+    expect(screen.getByRole("button",{name:"Largest purchases"})).toHaveAttribute("aria-pressed","true");
+  } else if(page === "recurring") {
+    expect(await screen.findByText("Potential recurring · needs more evidence")).toBeVisible();
+    expect(screen.getByText("Synthetic subscription candidate")).toBeVisible();
+  } else {
+    expect(await screen.findByText("Here’s what we know now")).toBeVisible();
+    expect(screen.getByText("Category composition")).toBeVisible();
+    expect(screen.getByText("Merchant composition")).toBeVisible();
+  }
+  expect(screen.queryByText(/Outflow increased by/)).not.toBeInTheDocument();
+});

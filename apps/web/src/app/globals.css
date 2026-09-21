@@ -1231,3 +1231,16 @@ details p {
 .detail-activity .activity-summary strong {
   font-size: 18px;
 }
+
+/* Statement mapping stays inside the existing import screen. */
+.mapping-panel { margin-top: 1.5rem; }
+.mapping-panel fieldset { border: 0; padding: 0; margin: 1rem 0; min-width: 0; }
+.mapping-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 1rem; margin: 1rem 0; }
+.mapping-fields label { display: grid; gap: .4rem; }
+.mapping-panel select { max-width: 100%; }
+.mapping-panel td { vertical-align: top; overflow-wrap: anywhere; }
+
+/* Compact partial-history states retain current-period content. */
+.history-developing { font-size: .9rem; }
+.history-developing h3 { font-size: 1rem; margin-bottom: .35rem; }
+.current-period .movement-grid { margin-bottom: 1.5rem; }

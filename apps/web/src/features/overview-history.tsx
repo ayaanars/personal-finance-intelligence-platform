@@ -9,7 +9,7 @@ import { displayMoney } from "@/lib/api";
 const amount = (value: string, currency: string) => displayMoney(value, currency).replace(/^\+/, "");
 
 function BaselineBand({ row, currency }: { row: BaselineData; currency: string }) {
-  if (row.state !== "available") return <div className="baseline-empty">
+  if (row.state !== "available") return <div className="notice history-developing">
     <h3>{row.state === "no_activity" ? "No selected-month activity" : "Your baseline needs more history"}</h3>
     <p>{row.state === "no_activity" ? "A comparison needs imported activity in this month." : "Use at least three consecutive prior months. A category also needs purchases in at least three reference months."}</p>
     <Link href="/app/import">Add more history</Link>
@@ -43,7 +43,7 @@ export function YourNormal({ data }: { data: IntelligenceCurrency }) {
   const row = options.find((item) => `${item.kind}:${item.name}` === selection) ?? report.metrics[0];
   return <section className="normal-section" aria-labelledby="normal-title">
     <h2 id="normal-title">Your normal</h2><p>See this month beside your own recent history.</p>
-    <div className="normal-grid">
+    {!options.some(item => item.state === "available") ? <p className="notice history-developing">History-based baseline is developing. This needs three consecutive prior months; current-month facts remain available above.</p> : <div className="normal-grid">
       <div>
         <label htmlFor="baseline-selection">Compare with your history</label>
         <select id="baseline-selection" value={selection} onChange={(event) => setSelection(event.target.value)}>
@@ -61,7 +61,7 @@ export function YourNormal({ data }: { data: IntelligenceCurrency }) {
         </dl>
         <details><summary>Baseline methodology</summary><p>{report.method}</p></details>
       </aside>
-    </div>
+    </div>}
   </section>;
 }
 
@@ -76,7 +76,7 @@ export function RecurringCommitments({ data }: { data: IntelligenceCurrency }) {
   const [expanded, setExpanded] = useState(false);
   const r = data.recurring;
   return <section className="recurring-section" aria-labelledby="recurring-title">
-    <h2 id="recurring-title">Recurring commitments</h2><p>Recognizable patterns. Transparent estimates. See the charges behind each pattern.</p>
+    <h2 id="recurring-title">Recurring commitments</h2><p>Potential recurring charges need more evidence. Confirmed monthly patterns meet the three-month timing and amount rules; they are not confirmed subscriptions.</p>
     {r.state === "likely_recurring" ? <div className="recurring-grid">
       <div className="recurring-totals">
         <span>Estimated monthly pattern</span><strong>{amount(r.monthly_estimate, data.currency)}</strong>
@@ -92,7 +92,7 @@ export function RecurringCommitments({ data }: { data: IntelligenceCurrency }) {
       </div>
       <div><ol className="recurring-list">{r.payments.slice(0, expanded ? undefined : 5).map((payment) => <li key={payment.merchant}>
         <div className="recurring-payment-heading"><h3>{payment.merchant}</h3><strong>{amount(payment.typical_amount, data.currency)}<small> / month</small></strong></div>
-        <p className="cadence-label">Monthly cadence · {payment.evidence.length} observed charge months · {payment.evidence.every(e => e.amount === payment.evidence[0].amount) ? "Same observed amount" : "Varying observed amounts"}</p>
+        <p className="cadence-label">Confirmed monthly pattern · Monthly cadence · {payment.evidence.length} observed charge months · {payment.evidence.every(e => e.amount === payment.evidence[0].amount) ? "Same observed amount" : "Varying observed amounts"}</p>
         {payment.newly_qualified && <p className="new-pattern">Newly qualified this month</p>}
         <div className="composition-bar" aria-hidden="true" style={{width:`${payment.share_percent ?? "0"}%`}} />
         <details><summary>Why this looks recurring</summary><p>{payment.reason}</p>
@@ -102,13 +102,14 @@ export function RecurringCommitments({ data }: { data: IntelligenceCurrency }) {
       </li>)}</ol>
         {r.payments.length > 5 && <button className="text-button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>{expanded ? "Show largest five" : "Show all recurring patterns"}</button>}
       </div>
-    </div> : <div className="baseline-empty"><h3>{r.state === "no_activity" ? "No activity in this month" : r.state === "insufficient_history" ? "More history unlocks recurring patterns" : "No strong recurring pattern yet"}</h3>
+    </div> : <div className="notice history-developing"><h3>{r.state === "no_activity" ? "No activity in this month" : r.state === "insufficient_history" ? "More history unlocks recurring patterns" : "No strong recurring pattern yet"}</h3>
       <p>Detection needs one eligible charge from the same known merchant in each of three consecutive months, with similar amounts and regular timing.</p>
       <Link href="/app/import">Import more history</Link>
     </div>}
-    {r.candidates.length > 0 && <details className="recurring-candidates"><summary>Insufficient evidence: {r.candidates.length} merchant {r.candidates.length === 1 ? "example" : "examples"}</summary>
-      <ul>{r.candidates.map((candidate) => <li key={candidate.merchant}><strong>{candidate.merchant}</strong><p>{reasons[candidate.reason]}</p></li>)}</ul>
-    </details>}
+    {r.candidates.length > 0 && <section className="recurring-candidates"><h3>Potential recurring · needs more evidence</h3>
+      <p>These merchants have observed charges, not confirmed subscriptions. A single charge does not establish recurrence.</p>
+      <ul className="purchase-list">{r.candidates.map(candidate => <li key={candidate.merchant}><div><strong>{candidate.merchant}</strong><p>{reasons[candidate.reason]}</p><p>{candidate.observed_months ?? 1} observed charge months</p><details><summary>Observed charges</summary>{candidate.evidence?.map(entry => <p key={entry.identifier}><Link href={`/app/transactions/${entry.identifier}`}>{dateLabel(entry.day)}</Link> · {amount(entry.amount,data.currency)}</p>)}</details></div>{candidate.current_amount && <strong>{amount(candidate.current_amount,data.currency)} this month</strong>}</li>)}</ul>
+    </section>}
     <details className="recurring-method"><summary>How recurring patterns are identified</summary><p>{r.method}</p></details>
   </section>;
 }

@@ -69,6 +69,8 @@ def test_openapi_only_exposes_health_authentication_and_import_operations() -> N
         "/api/v1/transactions/{transaction_id}/category",
         "/api/v1/transactions/{transaction_id}/reprocess",
         "/api/v1/imports",
+        "/api/v1/imports/inspect",
+        "/api/v1/imports/profiles",
         "/api/v1/imports/{import_id}",
         "/api/v1/imports/{import_id}/rows",
         "/api/v1/imports/{import_id}/finalize",

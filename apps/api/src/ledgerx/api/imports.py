@@ -9,11 +9,38 @@ from starlette.concurrency import run_in_threadpool
 from ledgerx.api.auth_schemas import EmptyMutation
 from ledgerx.api.auth_security import Authenticated, AuthenticatedCSV
 from ledgerx.api.import_upload import read_csv_upload
-from ledgerx.modules.imports import service
+from ledgerx.modules.imports import mapping_service, service
+from ledgerx.modules.imports.mapping import read_mapping
+from ledgerx.modules.imports.mapping_service import InspectionView, ProfileView, SaveProfile
 from ledgerx.modules.imports.schemas import FinalizeView, ImportView, RowPage
 
 router = APIRouter(prefix="/api/v1/imports", tags=["imports"])
 IdempotencyKey = Annotated[UUID, Header(alias="Idempotency-Key")]
+MappingHeader = Annotated[str | None, Header(alias="X-Column-Mapping", max_length=6000)]
+
+
+@router.post("/inspect")
+async def inspect_upload(
+    request: Request,
+    context: AuthenticatedCSV,
+    x_column_mapping: MappingHeader = None,
+) -> InspectionView:
+    content = await read_csv_upload(request)
+    try:
+        return await run_in_threadpool(
+            mapping_service.inspect,
+            context.db,
+            context.principal,
+            content,
+            read_mapping(x_column_mapping) if x_column_mapping is not None else None,
+        )
+    finally:
+        del content
+
+
+@router.post("/profiles", status_code=201)
+def save_profile(body: SaveProfile, context: Authenticated) -> ProfileView:
+    return mapping_service.save_profile(context.db, context.principal, body)
 
 
 @router.post(
@@ -32,6 +59,7 @@ async def upload(
     idempotency_key: IdempotencyKey,
     x_filename: Annotated[str, Header(max_length=124)],
     parser_code: Annotated[str, Query(max_length=80)] = "ledgerx-canonical",
+    x_column_mapping: MappingHeader = None,
 ) -> ImportView:
     content = await read_csv_upload(request)
     try:
@@ -43,6 +71,7 @@ async def upload(
             parser_code,
             idempotency_key,
             UUID(request.state.correlation_id),
+            read_mapping(x_column_mapping) if x_column_mapping is not None else None,
         )
     finally:
         del content

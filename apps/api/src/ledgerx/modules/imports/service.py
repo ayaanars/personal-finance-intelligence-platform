@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from ledgerx.modules.identity.service import Principal
 from ledgerx.modules.imports.errors import ImportFailure
+from ledgerx.modules.imports.mapping import ColumnMapping, MappedCSV, read_table
 from ledgerx.modules.imports.models import ImportAudit, ImportRow, StatementImport
 from ledgerx.modules.imports.normalization import ERROR_MESSAGES, normalize
 from ledgerx.modules.imports.parser import select_adapter
@@ -113,6 +114,7 @@ def preview(db: Session, batch: StatementImport) -> ImportView:
         expires_at=batch.expires_at,
         finalized_at=batch.finalized_at,
         can_finalize=status == "ready",
+        can_save_mapping=status in {"ready", "completed"} and batch.mapping_spec is not None,
         rows=row_page(db, batch, 0, 50),
     )
 
@@ -124,8 +126,10 @@ def stage(
     parser_code: str,
     key: UUID,
     correlation_id: UUID,
+    mapping: ColumnMapping | None = None,
 ) -> ImportView:
-    adapter = select_adapter(parser_code)
+    adapter = MappedCSV(mapping) if mapping is not None else select_adapter(parser_code)
+    # Bind retries to both the original bytes and every normalization choice.
     digest = hashlib.sha256(content).digest()
     # The authentication dependency already locks the owner across uploads and finalize.
     existing = db.scalar(
@@ -135,10 +139,16 @@ def stage(
         )
     )
     if existing is not None:
-        if (existing.file_sha256, existing.parser_name, existing.parser_version) != (
+        if (
+            existing.file_sha256,
+            existing.parser_name,
+            existing.parser_version,
+            existing.mapping_spec,
+        ) != (
             digest,
             adapter.name,
             adapter.version,
+            mapping.model_dump() if mapping else None,
         ):
             raise ImportFailure(
                 409, "IDEMPOTENCY_KEY_REUSED", "Use a new key for a different upload"
@@ -164,6 +174,8 @@ def stage(
         currencies=sorted({row.currency for row in valid if row.currency is not None}),
         created_at=now,
         expires_at=now + timedelta(hours=24),
+        mapping_spec=mapping.model_dump() if mapping else None,
+        source_headers=read_table(content).headers if mapping else None,
     )
     db.add(batch)
     db.flush()
