@@ -142,3 +142,90 @@ input::placeholder { color:var(--muted);opacity:1; }
 .cadence-timeline>span>span { font-size:10px; }
 .marketing .chart-baseline>span { font-size:12px; }
  .unusual-severity.high { background:#fff0dc;color:#79431a; }
+
+/* Final micro-polish: preserve layout, tighten rhythm and clarify interactive states. */
+.private-app .primary { background:var(--accent);border-color:var(--accent);color:#fff; }
+.private-app .primary:hover { background:var(--forest);border-color:var(--forest); }
+button,.button,input:not([type=checkbox]):not([type=radio]):not([type=file]),select { border-radius:8px; }
+input:disabled,select:disabled { opacity:.65;cursor:not-allowed; }
+button:disabled:hover,.private-app button:disabled:hover { background:var(--paper); }
+button.primary:disabled:hover,.private-app button.primary:disabled:hover { background:var(--accent);border-color:var(--accent); }
+.private-app .period-controls label { display:block;margin-bottom:0; }
+.private-app .period-controls select { display:block;margin-top:4px;min-height:44px;height:44px;font-size:14px;padding:8px 12px; }
+.private-app .period-controls>button { min-height:44px;height:44px;font-size:14px; }
+.private-app .period-controls .refresh-button,.area-unusual .period-controls>button { width:44px;padding:0;font-size:22px; }
+.private-app :is(.segmented,.currency-picker,.relationship-months) button { min-height:36px;font-size:13px;border-radius:8px; }
+.private-app :is(.segmented,.currency-picker) button[aria-pressed=true] { border-color:var(--forest); }
+.private-app .change-stage .segmented button[aria-pressed=true] { border-color:var(--accent); }
+.private-app :is(details,.metric-label,.driver-label,.cash-bridge,.cash-bridge p,.change-title p,.change-title>a,.change-footnote,.relationship-comparison p,.relationship-comparison span,.relationship-caveat,.relationship-scatter figcaption span) { font-size:13px; }
+.private-app .contribution-ranks :is(summary,details p) { font-size:13px; }
+.private-app .intelligence-heading { margin-bottom:20px; }
+.private-app .intelligence-heading h1 { font-size:clamp(34px,3.2vw,46px); }
+.private-app .financial-state dd { font-variant-numeric:tabular-nums; }
+.private-app th { font-size:13px;letter-spacing:.025em; }
+.private-app td { padding-block:13px; }
+.rail-caption { padding-bottom:22px;letter-spacing:.1em; }
+.rail-group { gap:3px; }
+.rail-group + .rail-group { margin-top:12px;padding-top:12px; }
+.rail-nav a { display:flex;align-items:center;gap:10px;line-height:1.3; }
+.nav-icon { flex:0 0 22px;display:grid;place-items:center; }
+.private-app .rail-nav a[aria-current] { color:#fff;background:var(--forest);font-weight:600;box-shadow:inset 3px 0 0 #95c8a4; }
+.private-app .rail-nav a[aria-current] .nav-icon { color:var(--mint); }
+.area-overview .change-title { padding:18px 24px 0; }
+.area-overview .change-stage-grid { padding:18px 24px 20px;gap:24px; }
+.area-overview .change-headline { padding-top:0; }
+.area-overview .hero-number { font-size:clamp(34px,3.4vw,52px);margin:6px 0 10px; }
+.area-overview .cash-bridge { margin-top:16px;padding-top:12px; }
+.area-overview .change-footnote { padding-top:12px;max-width:42ch; }
+.area-overview .contribution-explorer h3 { margin:10px 0 8px;font-size:13px; }
+.area-overview .contribution-ranks li { margin-top:7px; }
+.area-overview .contribution-fill { height:7px;margin-top:5px; }
+.area-overview .contribution-ranks summary { padding:3px 0; }
+.insights-feed>.insight-cards>article:first-child { padding-block:20px;background:#edf3e980; }
+.insights-feed>.insight-cards>article:first-child h3 { font-size:20px;line-height:1.4; }
+.insights-feed .insight-index { min-width:40px;line-height:1.2; }
+.private-app .chart-periods button { border-radius:8px;padding:8px 6px; }
+.private-app .chart-periods button[aria-pressed=true] { border-color:var(--accent);box-shadow:inset 0 -2px 0 var(--accent); }
+.chart-zero { stroke-dasharray:3 4; }
+.private-app .trends-explorer { padding:24px; }
+.unusual-evidence { gap:20px; }
+.unusual-evidence section>strong { margin:6px 0; }
+.relationship-comparison { background:#edf3e980;border-radius:0 8px 8px 0;padding:18px; }
+.relationship-comparison hr { margin:18px 0; }
+.cadence-timeline>span { gap:4px;padding-bottom:10px; }
+.private-app .recurring-evidence { gap:12px;border-radius:8px; }
+.private-app .behaviour-stats { gap:20px; }
+.private-app .mapping-panel[data-recognition=recognized] { border-top:3px solid var(--accent);background:#f1f7ed; }
+.forecast-summary .financial-state { margin:16px 0 20px; }
+.forecast-projection { display:flex;flex-direction:column;gap:4px;padding-top:12px; }
+.forecast-projection strong { color:var(--accent);font-size:20px;font-weight:550;letter-spacing:-.025em; }
+.marketing .product-example figcaption { padding-block:18px; }
+.marketing .hero-actions .button { min-height:48px; }
+.auth-form :is(input:not([type=checkbox]),button) { min-height:48px; }
+@media(min-width:1280px) {
+ .private-app .workspace { max-width:1544px;padding-top:28px; }
+ .app-footer { max-width:1544px; }
+ .marketing-hero { padding-block:48px 60px; }
+ .trust-section { padding-block:64px; }
+}
+@media(max-width:1023px) {
+ .private-app :is(.segmented,.currency-picker,.relationship-months) button { min-height:44px; }
+ .private-app .mobile-menu { min-height:44px!important; }
+ .private-app .topline-actions .text-button { min-height:44px; }
+}
+@media(max-width:767px) {
+ .private-app .period-controls>label { flex:1; }
+ .area-overview .change-title { padding:18px 18px 0; }
+ .area-overview .change-stage-grid { padding:18px;gap:20px; }
+ .area-overview .hero-number { font-size:40px; }
+ .private-app .trends-explorer { padding:18px; }
+ .forecast-metrics { grid-template-columns:1fr;gap:16px; }
+ .forecast-metrics>div+div { border-left:0;border-top:1px solid var(--line);padding:16px 0 0; }
+ .forecast-projection { padding-top:4px; }
+ .relationship-comparison { border-radius:8px;padding:16px; }
+}
+
+@media(min-width:768px) and (max-width:1023px) {
+ .relationship-scatter svg text { font-size:20px; }
+ .line-chart.compact text { font-size:20px; }
+}

@@ -112,7 +112,7 @@ export function UploadStatement() {
       {error && <p role="alert" className="notice error">{error}</p>}
       {busy && <p role="status">Processing statement…</p>}
     </section>
-    {inspection && mapping && <section className="data-section mapping-panel">
+    {inspection && mapping && <section className="data-section mapping-panel" data-recognition={inspection.recognition.state}>
       <h2>{inspection.recognition.state === "recognized" ? inspection.recognition.source === "reviewed" ? "Mapping confirmed" : "Recognized automatically" : inspection.recognition.state === "needs_confirmation" ? "Needs confirmation" : "Needs mapping"}</h2>
       <p>{inspection.recognition.state === "recognized" ? inspection.recognition.profile_name ? `Applied saved mapping: ${inspection.recognition.profile_name}. Review the preview before confirming.` : inspection.recognition.source === "reviewed" ? "Your mapping has been checked. Review the preview before confirming." : "We recognized this statement format. Review the preview before confirming." : "We need a little more information to interpret this statement safely."}</p>
       <p className="hint">Date: {mapping.transaction_date || "Not selected"} · Description: {mapping.description || "Not selected"} · {mapping.amount_mode === "single" ? `Signed amount: ${mapping.amount || "Not selected"}` : `Debit: ${mapping.debit || "Not selected"} / Credit: ${mapping.credit || "Not selected"}`} · Currency: {mapping.currency ?? mapping.fixed_currency ?? "Not selected"} · Format: {dateFormat || "Needs confirmation"}</p>

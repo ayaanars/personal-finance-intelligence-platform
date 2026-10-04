@@ -248,7 +248,7 @@ export function IntelligenceExamples() {
         </p>
       </section>
       <section className="planning-preview" aria-label="Planning and relationships examples">
-        <article><span>Synthetic planning example · AED</span><h3>A target, with perspective.</h3><strong>3,200 / 4,000</strong><p>Spending so far against a monthly limit. Forecasts depend on observed coverage and the pace of activity.</p><div className="goal-track" aria-label="Example spending: 80% of limit; projected 96%"><span style={{width:"80%"}} /><i style={{left:"96%"}} /></div><p>Day 25 of 30 · conditional estimate AED 3,840. Marker: projected spending at an unchanged pace.</p></article>
+        <article><span>Synthetic planning example · AED</span><h3>Your month, in perspective.</h3><strong>3,200 observed · ≈ 3,840 projected</strong><p>Spending so far and a conditional month-end outlook. Forecasts depend on observed coverage and the pace of activity.</p><div className="goal-track" role="img" aria-label="Synthetic spending: AED 3,200 observed, approximately AED 3,840 projected"><span style={{width:"83.33%"}} /></div><p>Day 25 of 30 · conditional estimate AED 3,840. Bar: observed spending as a share of that projection.</p></article>
         <article><span>Synthetic relationship example</span><h3>Two patterns, side by side.</h3><strong>Dining ↔ transport</strong><p>Explore how spending categories move together across observed months. Association does not establish a cause.</p><div className="preview-cadence"><span>Jul · AED 470 / 220</span><span>Aug · 500 / 240</span><span>Sep · 810 / 380</span></div></article>
       </section>
     </div>

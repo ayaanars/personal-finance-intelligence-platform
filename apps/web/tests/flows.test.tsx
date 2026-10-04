@@ -369,7 +369,7 @@ it("shows automatic preview without manual mapping and finalizes only on confirm
   const finalize = vi.spyOn(api,"finalize").mockResolvedValue({id,status:"completed",accepted_rows:1,finalized_at:"2026-09-21"});
   render(<UploadStatement />);
   await userEvent.upload(screen.getByLabelText("Choose your statement"),new File(["synthetic"],"test.csv"));
-  await screen.findByText("Recognized automatically");
+  expect((await screen.findByText("Recognized automatically")).closest("section")).toHaveAttribute("data-recognition", "recognized");
   expect(screen.getByText(/Applied saved mapping/)).toBeVisible();
   expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   expect(upload).not.toHaveBeenCalled(); expect(finalize).not.toHaveBeenCalled();

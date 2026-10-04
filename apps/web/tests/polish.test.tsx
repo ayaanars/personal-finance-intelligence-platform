@@ -10,6 +10,8 @@ describe("polished product previews", () => {
     expect(screen.queryByRole("button", {name:"New location"})).not.toBeInTheDocument();
     expect(screen.queryByRole("button", {name:"Unusual time"})).not.toBeInTheDocument();
     expect(screen.getByRole("region", {name:"Planning and relationships examples"})).toBeInTheDocument();
+    expect(screen.getByRole("img", {name:"Synthetic spending: AED 3,200 observed, approximately AED 3,840 projected"})).toBeInTheDocument();
+    expect(screen.queryByText("A target, with perspective.")).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", {name:"Annual estimate"}));
     expect(screen.getByText("AED 3,864")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", {name:"First-time merchant"}));

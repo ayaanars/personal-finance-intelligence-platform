@@ -18,15 +18,11 @@ it("renders forecast, goal progress, quality and readable recurring evidence", a
     expect(screen.getByText(/20 September 2026/)).toBeVisible();
     expect(screen.queryByText("2026-09-20")).not.toBeInTheDocument();
 });
-it("creates a net cash flow goal and edits active state", async () => {
+it("preserves editing an existing saved goal", async () => {
     vi.spyOn(api, "plan").mockResolvedValue(plan);
     const save = vi.spyOn(api, "saveGoal").mockResolvedValue(undefined);
     render(<Goals />);
     await screen.findByText("On track");
-    await userEvent.selectOptions(screen.getByLabelText("Goal"), "net_cash_flow");
-    await userEvent.type(screen.getByRole("textbox", { name: "Target amount" }), "2000");
-    await userEvent.click(screen.getByRole("button", { name: "Save goal" }));
-    await waitFor(() => expect(save).toHaveBeenCalledWith({ month: "2026-09", currency: "AED", kind: "net_cash_flow", target: "2000", active: true }));
     await userEvent.click(screen.getByText("Edit goal"));
     const inputs = screen.getAllByRole("checkbox", { name: "Active" });
     await userEvent.click(inputs[0]);
@@ -39,7 +35,7 @@ it("keeps currencies separate and selected month explicit", async () => {
     await screen.findByText("On track");
     await userEvent.click(screen.getByRole("button", { name: "USD" }));
     expect(screen.queryByText("On track")).not.toBeInTheDocument();
-    expect(screen.getByText("Set your first target")).toBeVisible();
+    expect(screen.getByText("No forecast yet")).toBeVisible();
     await userEvent.selectOptions(screen.getByRole("combobox", { name: "Month" }), "2026-08");
     await waitFor(() => expect(fetcher).toHaveBeenLastCalledWith("2026-08"));
 });
@@ -67,4 +63,35 @@ it("removes only the selected monthly goal after its inline confirmation", async
     await userEvent.click(screen.getByRole("button", {name:"Confirm removal"}));
     await waitFor(()=>expect(remove).toHaveBeenCalledWith({month:"2026-09",currency:"AED",kind:"spending"}));
     expect(await screen.findByText("Goal removed.")).toBeVisible();
+});
+
+it("focuses on observed activity and forecasts without monthly goal creation controls", async () => {
+    vi.spyOn(api, "plan").mockResolvedValue({ ...plan, goals: [] });
+    render(<Goals />);
+    expect(await screen.findByText("Observed spending")).toBeVisible();
+    expect(screen.getByText("Observed outflow")).toBeVisible();
+    expect(screen.getByText("Observed net cash flow")).toBeVisible();
+    expect(screen.getAllByText("Month-end projection")).toHaveLength(3);
+    expect(screen.getByText("1,800.00 AED")).toBeVisible();
+    expect(screen.getByText("≈ 3,600 AED")).toBeVisible();
+    expect(screen.queryByText("Add or replace a monthly goal")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Save goal" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Goal" })).not.toBeInTheDocument();
+    expect(screen.queryByText("How goal status works")).not.toBeInTheDocument();
+});
+
+it.each(["historical", "unavailable"] as const)("keeps %s forecast states honest", async (state) => {
+    vi.spyOn(api, "plan").mockResolvedValue({ ...plan, goals: [], currencies: [{
+        ...plan.currencies[0], state, projected_spending: null, projected_outflow: null, projected_net_cash_flow: null,
+    }] });
+    render(<Goals />);
+    expect(await screen.findByText("Observed net cash flow")).toBeVisible();
+    expect(screen.getByText("1,800.00 AED")).toBeVisible();
+    if (state === "historical") {
+        expect(screen.queryByText("Month-end projection")).not.toBeInTheDocument();
+    } else {
+        expect(screen.getAllByText("Not available")).toHaveLength(3);
+    }
 });
