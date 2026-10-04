@@ -127,7 +127,7 @@ export function TransactionHistory() {
                           className="transaction-link"
                           href={`/app/transactions/${item.id}`}
                         >
-                          {item.merchant ?? item.normalized_description}
+                          {item.display_name ?? item.merchant ?? item.normalized_description}
                         </Link>
                         <span className="description">
                           {item.raw_description}
@@ -263,7 +263,7 @@ export function TransactionDetail({ id }: { id: string }) {
             <div>
               <p className="eyebrow">Transaction detail</p>
               <h1 className="detail-title">
-                {item.merchant ?? item.normalized_description}
+                {item.display_name ?? item.merchant ?? item.normalized_description}
               </h1>
               <p>
                 {dateLabel(item.transaction_date)} ·{" "}

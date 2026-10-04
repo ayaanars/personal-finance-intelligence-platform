@@ -3,6 +3,7 @@ import { dateLabel } from "@/lib/dates";
 
 export type Activity = {
   merchant: string | null;
+  display_name?: string | null;
   normalized_description: string;
   raw_description: string;
   amount: string;
@@ -15,7 +16,7 @@ export function ActivitySummary({ activity }: { activity: Activity }) {
   return (
     <div className="activity-summary">
       <div className="activity-name">
-        <strong>{activity.merchant ?? activity.normalized_description}</strong>
+        <strong>{activity.display_name ?? activity.merchant ?? activity.normalized_description}</strong>
         <span>{activity.category}</span>
       </div>
       <div className="activity-value">

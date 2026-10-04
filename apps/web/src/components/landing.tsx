@@ -35,8 +35,7 @@ export function Landing() {
               <span>In perspective.</span>
             </h1>
             <p>
-              Turn everyday transactions into understandable history. Build the
-              foundation for a clearer picture of your financial life.
+              Turn transaction history into a clear picture of your financial behaviour and what changes over time.
             </p>
             <div className="hero-actions">
               <Link className="button primary" href="/register">
@@ -70,11 +69,11 @@ export function Landing() {
                 brought together.
               </h3>
               <p>
-                Upload a statement in canonical CSV format. Review the
-                validation results, then choose when to add it.
+                Upload a CSV statement. Review recognized columns and normalized
+                transactions, then confirm when you are ready.
               </p>
               <span className="process-format">
-                CSV upload → review → finalize
+                Upload → recognize → preview → confirm
               </span>
             </div>
             <div className="process-steps">
@@ -113,15 +112,15 @@ export function Landing() {
         </section>
         <section className="vision-section" id="the-bigger-picture">
           <div className="vision-heading">
-            <p className="eyebrow">The direction ahead</p>
+            <p className="eyebrow">Your financial perspective</p>
             <h2>Your history has more to tell you.</h2>
             <p>
-              LedgerX is being built to learn from your transaction history: see
+              Explore your transaction history: see
               what changed, understand what caused it, and find your normal.
             </p>
             <p className="vision-disclosure">
-              Today: transaction history, merchant recognition and category
-              corrections. Behavioral analysis is planned, not yet available.
+              Explore monthly change, personal baselines, recurring patterns, unusual
+              activity, relationships, and goals with conditional forecasts.
             </p>
           </div>
           <IntelligenceExamples />
@@ -136,18 +135,18 @@ export function Landing() {
               <span>Several months</span>
               <h3>Find your normal.</h3>
               <p>
-                The foundation for personal baselines and recurring commitments.
+                Compare personal baselines and likely monthly payment patterns.
               </p>
-              <strong>Planned intelligence</strong>
+              <strong>As history develops</strong>
             </article>
             <article>
               <span>Longer history</span>
               <h3>See what’s changing.</h3>
               <p>
-                The foundation for understanding patterns, shifts and unusual
-                activity.
+                Explore patterns, shifts, unusual activity and relationships
+                across imported months.
               </p>
-              <strong>Planned intelligence</strong>
+              <strong>As history develops</strong>
             </article>
           </div>
         </section>

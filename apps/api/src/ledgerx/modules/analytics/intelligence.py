@@ -21,6 +21,11 @@ class Observation:
     merchant: str | None
     amount: Decimal
     return_signal: bool = False
+    entity_label: str | None = None
+
+    @property
+    def display_name(self) -> str | None:
+        return self.merchant or self.entity_label
 
     @property
     def spending(self) -> bool:
@@ -72,8 +77,8 @@ def behaviour(rows: list[Observation], selected: date) -> Behaviour:
         counts: dict[str | None, int] = defaultdict(int)
         categories: dict[str, Decimal] = defaultdict(Decimal)
         for row in purchases:
-            merchants[row.merchant] -= row.amount
-            counts[row.merchant] += 1
+            merchants[row.display_name] -= row.amount
+            counts[row.display_name] += 1
             categories[row.category] -= row.amount
 
         def breakdown(names: Sequence[str | None]) -> list[Breakdown]:
@@ -89,7 +94,8 @@ def behaviour(rows: list[Observation], selected: date) -> Behaviour:
 
         ranked = sorted(merchants, key=lambda name: (-merchants[name], name or ""))
         known_before = {row.merchant for row in rows if row.day < selected and row.merchant}
-        new_names = [name for name in ranked if name and name not in known_before]
+        known_current = {row.merchant for row in purchases if row.merchant}
+        new_names = [name for name in ranked if name in known_current and name not in known_before]
         # No previous observations means there is no evidence of newly appearing activity.
         if not any(row.day < selected for row in rows):
             new_names = []
@@ -110,7 +116,7 @@ def behaviour(rows: list[Observation], selected: date) -> Behaviour:
         before: dict[str | None, Decimal] = defaultdict(Decimal)
         for row in previous:
             if row.spending:
-                before[row.merchant] -= row.amount
+                before[row.display_name] -= row.amount
         changes = (
             [
                 change(
@@ -152,7 +158,7 @@ def behaviour(rows: list[Observation], selected: date) -> Behaviour:
                 LargeTransaction(
                     identifier=r.identifier,
                     day=r.day.isoformat(),
-                    merchant=r.merchant,
+                    merchant=r.display_name,
                     category=r.category,
                     amount=money(-r.amount),
                 )

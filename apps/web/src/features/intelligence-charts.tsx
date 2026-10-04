@@ -32,7 +32,9 @@ export function LineChart({ points: observations, currency, label, compact = fal
     const [active, setActive] = useState<number | null>(null);
     const id = useId();
     const geometry = chartGeometry(points);
-    const selected = points[active ?? points.length - 1];
+    const scaleValues = ["0.0000", ...points.flatMap(p => p.value === null ? [] : [p.value])].sort((a,b) => decimalUnits(a) < decimalUnits(b) ? -1 : decimalUnits(a) > decimalUnits(b) ? 1 : 0);
+    const selectedIndex = Math.min(active ?? points.length - 1, points.length - 1);
+    const selected = points[selectedIndex];
     const segments: string[] = [];
     let segment = "";
     geometry.points.forEach(p => { if (p.y === null) {
@@ -46,12 +48,13 @@ export function LineChart({ points: observations, currency, label, compact = fal
         segments.push(segment);
     return <figure className={`line-chart ${compact ? "compact" : ""}`} aria-labelledby={id}>
   <figcaption id={id}><span>{label}</span><strong>{selected?.value != null ? amount(selected.value, currency) : "No observation"}</strong><small>{selected ? monthLabel(selected.month) : "No history"}</small></figcaption>
-  {points.some(p => p.value !== null) ? <><svg viewBox="0 0 640 220" role="img" aria-label={`${label} over imported months. Exact values follow below.`}>
+  {points.some(p => p.value !== null) ? <>{!compact && <p className="chart-scale">Scale: {amount(scaleValues[0], currency)} to {amount(scaleValues.at(-1)!, currency)}</p>}<svg viewBox="0 0 640 220" role="img" aria-label={`${label} over imported months. Exact values follow below.`}>
+   {geometry.points.length > 0 && <rect className="chart-current" x={geometry.points[selectedIndex].x - 16} y="30" width="32" height="160" rx="8"/>}
    {[40, 88, 136, 184].map(y => <line key={y} x1="32" x2="608" y1={y} y2={y} className="chart-gridline"/>)}
    <line x1="32" x2="608" y1={geometry.zero} y2={geometry.zero} className="chart-zero"/>
-   {segments.map((d, i) => <path key={i} d={d} className="chart-line"/>)}
-   {geometry.points.map((p, i) => p.y === null ? null : <g key={points[i].month}><circle cx={p.x} cy={p.y} r={active === i ? 7 : 4} className="chart-dot"/><text x={p.x} y="214" textAnchor="middle">{monthLabel(points[i].month).slice(0, 3)}</text></g>)}
-  </svg><div className="chart-periods" aria-label="Explore chart values">{points.map((p, i) => <button key={p.month} aria-label={`${monthLabel(p.month)}: ${p.value === null ? "No observation" : amount(p.value, currency)}`} aria-pressed={active === i} onFocus={() => setActive(i)} onMouseEnter={() => setActive(i)} onClick={() => setActive(i)}>{monthLabel(p.month).slice(0, 3)}<span>{p.value === null ? "No data" : amount(p.value, currency)}</span></button>)}</div></> : <p className="history-message">No observations for this selection.</p>}
+   {segments.map((d, i) => <path key={i} d={d} className="chart-line" pathLength="1"/>)}
+   {geometry.points.map((p, i) => p.y === null ? null : <g key={points[i].month}><title>{`${monthLabel(points[i].month)}: ${amount(points[i].value!, currency)}`}</title><circle cx={p.x} cy={p.y} r={selectedIndex === i ? 7 : 4} className="chart-dot"/><text x={p.x} y="214" textAnchor="middle">{monthLabel(points[i].month).slice(0, 3)}</text></g>)}
+  </svg><div className="chart-periods" aria-label="Explore chart values">{points.map((p, i) => <button key={p.month} aria-label={`${monthLabel(p.month)}: ${p.value === null ? "No observation" : amount(p.value, currency)}`} aria-pressed={selectedIndex === i} onFocus={() => setActive(i)} onMouseEnter={() => setActive(i)} onClick={() => setActive(i)}>{monthLabel(p.month).slice(0, 3)}<span>{p.value === null ? "No data" : amount(p.value, currency)}</span></button>)}</div></> : <p className="history-message">No observations for this selection.</p>}
   {!compact && <p className="chart-note">Missing observations break the line. Imported months may be partial. Select or focus a month for its exact value.</p>}
  </figure>;
 }

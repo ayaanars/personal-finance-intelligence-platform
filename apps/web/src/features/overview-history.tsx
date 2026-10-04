@@ -43,7 +43,7 @@ export function YourNormal({ data }: { data: IntelligenceCurrency }) {
   const row = options.find((item) => `${item.kind}:${item.name}` === selection) ?? report.metrics[0];
   return <section className="normal-section" aria-labelledby="normal-title">
     <h2 id="normal-title">Your normal</h2><p>See this month beside your own recent history.</p>
-    {!options.some(item => item.state === "available") ? <p className="notice history-developing">History-based baseline is developing. This needs three consecutive prior months; current-month facts remain available above.</p> : <div className="normal-grid">
+    {!options.some(item => item.state === "available") ? <p className="notice history-developing">History-based baseline is developing. This needs three consecutive prior months; current-month facts remain available on this page.</p> : <div className="normal-grid">
       <div>
         <label htmlFor="baseline-selection">Compare with your history</label>
         <select id="baseline-selection" value={selection} onChange={(event) => setSelection(event.target.value)}>
@@ -95,6 +95,7 @@ export function RecurringCommitments({ data }: { data: IntelligenceCurrency }) {
         <p className="cadence-label">Confirmed monthly pattern · Monthly cadence · {payment.evidence.length} observed charge months · {payment.evidence.every(e => e.amount === payment.evidence[0].amount) ? "Same observed amount" : "Varying observed amounts"}</p>
         {payment.newly_qualified && <p className="new-pattern">Newly qualified this month</p>}
         <div className="composition-bar" aria-hidden="true" style={{width:`${payment.share_percent ?? "0"}%`}} />
+        <div className="cadence-timeline" aria-label={`${payment.merchant} observed charge months`}>{payment.evidence.map(entry => <span key={entry.identifier}>{monthLabel(entry.day.slice(0,7))}<span aria-hidden="true">●</span></span>)}</div>
         <details><summary>Why this looks recurring</summary><p>{payment.reason}</p>
           <ol className="recurring-evidence">{payment.evidence.map((entry) => <li key={entry.identifier}><Link href={`/app/transactions/${entry.identifier}`}>{dateLabel(entry.day)}</Link><strong>{amount(entry.amount, data.currency)}</strong></li>)}</ol>
           <p>Median observed charge × 12 = {amount(payment.annual_estimate, data.currency)}. {payment.newly_qualified === null ? "More earlier history is needed to know when this pattern first qualified." : "Newly qualified means the previous rolling window did not meet these rules; it does not mean a new subscription."}</p>

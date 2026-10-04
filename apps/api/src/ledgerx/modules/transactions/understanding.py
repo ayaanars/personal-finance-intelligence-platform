@@ -368,3 +368,33 @@ def understand(
         if keywords:
             return keywords
     return result(Category.OTHER, "fallback", "No rule matched; fell back to Other.", "unmatched")
+
+
+def activity_label(raw: str, merchant: str | None = None) -> str | None:
+    """Presentation only: an activity label is not a learned counterparty identity."""
+    if merchant:
+        return merchant
+    description = normalize_description(raw)
+    known = merchant_match(description)
+    if known:
+        return known.name
+    labeled = described_merchant(description)
+    if labeled:
+        return labeled
+    labels = {
+        "RENT": "Rent",
+        "RENT PAYMENT": "Rent",
+        "HOUSING PAYMENT": "Housing payment",
+        "ELECTRICITY BILL": "Electricity payment",
+        "WATER BILL": "Water payment",
+        "MOBILE BILL": "Mobile payment",
+        "INTERNET BILL": "Internet payment",
+    }
+    if description in labels:
+        return labels[description]
+    counterparties = [
+        name
+        for name in ("Emirates NBD", "Emirates Islamic", "Etihad Credit")
+        if contains(description, name.upper())
+    ]
+    return counterparties[0] if len(counterparties) == 1 else None

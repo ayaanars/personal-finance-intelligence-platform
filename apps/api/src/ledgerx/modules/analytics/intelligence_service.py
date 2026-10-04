@@ -22,7 +22,7 @@ from ledgerx.modules.identity.service import Principal
 from ledgerx.modules.transactions.enrichment_models import TransactionEnrichment as Enrichment
 from ledgerx.modules.transactions.models import ImportedTransaction as Fact
 from ledgerx.modules.transactions.service import owned_query, preferences_for
-from ledgerx.modules.transactions.understanding import understand
+from ledgerx.modules.transactions.understanding import activity_label, understand
 
 
 class IntelligenceCurrency(CurrencyOverview):
@@ -82,6 +82,7 @@ def load_history(
                 merchant,
                 fact.amount,
                 rule.startswith("return_"),
+                activity_label(fact.description, merchant),
             )
         )
     return selected_text, available, observations
@@ -99,7 +100,7 @@ def intelligence(db: Session, principal: Principal, month: str | None) -> Intell
     summaries = build_currencies(
         (
             Activity(
-                month_name(r.day), r.currency, r.category, r.merchant, r.amount, 1, r.day, r.day
+                month_name(r.day), r.currency, r.category, r.display_name, r.amount, 1, r.day, r.day
             )
             for rows in observations.values()
             for r in rows

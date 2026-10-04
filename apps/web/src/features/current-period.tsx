@@ -41,7 +41,7 @@ export function CurrentPeriodFacts({data, month, showTotals = true}: {
     </dl>
     <div className="mapping-fields">{[
       {label:"Category composition", rows:data.categories},
-      {label:"Merchant composition", rows:b.top_spending_merchants},
+      {label:"Merchants & activities", rows:b.top_spending_merchants},
     ].map(group => <div key={group.label}><h3>{group.label}</h3><ol className="composition-ranks">{group.rows.slice(0,5).map(row => <li key={row.name ?? "unknown"}><div><strong>{row.name ?? "Unknown merchant"}</strong><div className="composition-bar" aria-hidden="true" style={{width:`${row.share_percent ?? 0}%`}} /></div><span>{amount(row.amount,data.currency)}<small>{row.share_percent ?? "0"}% · {row.transaction_count} purchases</small></span></li>)}</ol>{!group.rows.length && <p>No purchases in this period.</p>}</div>)}</div>
     <h3>Largest purchases</h3><ol className="purchase-list">{b.largest_purchases.map(row => <li key={row.identifier}><div><Link href={`/app/transactions/${row.identifier}`}>{row.merchant ?? row.category}</Link><p>{dateLabel(row.day)}</p></div><strong>{amount(row.amount,data.currency)}</strong></li>)}</ol>
     <p className="hint">Observed activity, not an account balance. Spending excludes cash and transfers; refunds are shown separately. Imported months may be partial.</p>

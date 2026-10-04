@@ -37,6 +37,7 @@ export const transactionSchema = z.object({
   raw_description: z.string(),
   normalized_description: z.string(),
   merchant: z.string().nullable(),
+  display_name: z.string().nullable().optional(),
   merchant_code: z.string().nullable().optional(),
   merchant_source: z.string().nullable().optional(),
   category,

@@ -131,7 +131,7 @@ def evaluate(rows: list[Observation], selected: date, currency: str) -> UnusualC
                 if value >= current_median * 4 and value >= current_total / 4:
                     add(
                         row.identifier,
-                        row.merchant or row.category,
+                        row.display_name or row.category,
                         "current_month_large_purchase",
                         "At least 4× this month's median purchase and 25% of this month's spending "
                         "across at least six purchases. Current-month comparison only, not a "
@@ -152,7 +152,7 @@ def evaluate(rows: list[Observation], selected: date, currency: str) -> UnusualC
                 if value >= typical * 3 and value > largest:
                     add(
                         row.identifier,
-                        row.merchant or row.category,
+                        row.display_name or row.category,
                         "large_purchase",
                         "Larger than every reference purchase and at least 3× the median purchase.",
                         value,

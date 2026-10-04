@@ -37,7 +37,7 @@ it("public root renders without authentication, with truthful feature disclosure
     "Your money.In perspective.",
   );
   expect(
-    screen.getByText(/Behavioral analysis is planned/),
+    screen.getByText(/Explore monthly change, personal baselines/),
   ).toBeInTheDocument();
   expect(screen.getByText("Synthetic transactions")).toBeInTheDocument();
   expect(

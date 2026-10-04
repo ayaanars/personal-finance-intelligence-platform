@@ -4,6 +4,7 @@ import "./globals.css";
 import "./public.css";
 import "./overview.css";
 import "./private.css";
+import "./polish.css";
 import { SessionProvider } from "@/components/session";
 
 export const metadata: Metadata = {

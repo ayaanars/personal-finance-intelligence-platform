@@ -35,7 +35,7 @@ export function BehaviourStory({ data }: { data: IntelligenceCurrency }) {
           <div><dt>Average purchase</dt><dd>{b.average_purchase ? amount(b.average_purchase, data.currency) : "No purchases"}</dd><p>Gross spending ÷ purchase count</p></div>
           <div><dt>Purchase frequency</dt><dd>{b.spending_count} <small>purchases</small></dd><p>Across {b.active_spending_days} observed spending days</p></div>
           <div><dt>Top five categories</dt><dd>{b.top_five_category_share === null ? "No spending" : `${b.top_five_category_share}%`}</dd><p>Share of gross spending</p></div>
-          <div><dt>Top five merchants</dt><dd>{b.top_five_merchant_share === null ? "No spending" : `${b.top_five_merchant_share}%`}</dd><p>Share of gross spending; unknown grouped together</p></div>
+          <div><dt>Top five merchants</dt><dd>{b.top_five_merchant_share === null ? "No spending" : `${b.top_five_merchant_share}%`}</dd><p>Share of gross spending; includes recognized activity labels. Unknowns stay grouped.</p></div>
         </dl>
       </div>
     </section>

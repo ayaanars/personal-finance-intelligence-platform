@@ -21,6 +21,7 @@ class TransactionView(BaseModel):
     raw_description: str
     normalized_description: str
     merchant: str | None
+    display_name: str | None = None
     merchant_code: str | None = None
     merchant_source: str | None = None
     category: Category

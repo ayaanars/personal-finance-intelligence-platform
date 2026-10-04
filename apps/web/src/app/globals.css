@@ -2,13 +2,13 @@
 /* One light theme, emerald accent, 8px controls and 12px grouped surfaces. */
 :root {
   color-scheme: light;
-  --canvas: #f4f6f5;
+  --canvas: #f7f8f3;
   --paper: #fff;
-  --ink: #192b26;
-  --muted: #57645f;
-  --line: #d6dfda;
+  --ink: #163d30;
+  --muted: #52665c;
+  --line: #d9e2d9;
   --accent: #126346;
-  --tint: #e8f1ec;
+  --tint: #e5f1e7;
 }
 * {
   box-sizing: border-box;
@@ -673,6 +673,7 @@ details p {
   *,
   *::before,
   *::after {
+    animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
   }

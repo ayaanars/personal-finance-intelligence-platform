@@ -57,21 +57,6 @@ const unusual = [
       "A larger amount can be intentional. Context helps you decide what deserves a second look.",
   },
   {
-    label: "New location",
-    merchant: "Purchase in a new city",
-    amount: "165.00",
-    detail: "A location that has not appeared in this example before.",
-    context:
-      "Travel could explain the change. A useful signal asks a question rather than drawing a conclusion.",
-  },
-  {
-    label: "Unusual time",
-    merchant: "A purchase at 02:14",
-    amount: "85.00",
-    detail: "Outside the usual purchase hours in this example.",
-    context: "Timing is context, not proof that something is wrong.",
-  },
-  {
     label: "First-time merchant",
     merchant: "An unfamiliar merchant",
     amount: "320.00",
@@ -95,7 +80,7 @@ export function IntelligenceExamples() {
       >
         <div className="concept-caption">
           <span>Spending & personal baseline</span>
-          <span>Planned intelligence · Illustrative data</span>
+          <span>Synthetic example</span>
         </div>
         <div className="concept-body">
           <h3 id="spending-title">
@@ -147,8 +132,7 @@ export function IntelligenceExamples() {
           <div className="demo-takeaway">
             <strong>Then ask why.</strong>
             <span>
-              The planned next step: connect a change to the transactions behind
-              it.
+              Follow the evidence from a change to the transactions behind it.
             </span>
           </div>
         </div>
@@ -159,7 +143,7 @@ export function IntelligenceExamples() {
       >
         <div className="concept-caption">
           <span>Recurring commitments</span>
-          <span>Planned · Illustrative data</span>
+          <span>Synthetic example</span>
         </div>
         <div className="concept-body">
           <h3 id="recurring-title">
@@ -183,6 +167,7 @@ export function IntelligenceExamples() {
               Annual estimate
             </button>
           </div>
+          <div className="preview-cadence" aria-label="Synthetic monthly payment evidence"><span>Jul ●</span><span>Aug ●</span><span>Sep ●</span></div>
           <div className="commitment-list" aria-live="polite">
             {commitments.map((item) => (
               <div className="commitment" key={item.name}>
@@ -216,7 +201,7 @@ export function IntelligenceExamples() {
       >
         <div className="concept-caption">
           <span>Unusual activity</span>
-          <span>Planned intelligence · Illustrative data</span>
+          <span>Synthetic example</span>
         </div>
         <div className="unusual-content">
           <div className="unusual-intro">
@@ -258,9 +243,13 @@ export function IntelligenceExamples() {
           </div>
         </div>
         <p className="unusual-footnote">
-          These signals are not available today. Location and time concepts
-          would require additional data beyond the current CSV format.
+          Advisory signals based on imported history, not proof of fraud.
+          Examples use synthetic data; personal results require sufficient history.
         </p>
+      </section>
+      <section className="planning-preview" aria-label="Planning and relationships examples">
+        <article><span>Synthetic planning example · AED</span><h3>A target, with perspective.</h3><strong>3,200 / 4,000</strong><p>Spending so far against a monthly limit. Forecasts depend on observed coverage and the pace of activity.</p><div className="goal-track" aria-label="Example spending: 80% of limit; projected 96%"><span style={{width:"80%"}} /><i style={{left:"96%"}} /></div><p>Day 25 of 30 · conditional estimate AED 3,840. Marker: projected spending at an unchanged pace.</p></article>
+        <article><span>Synthetic relationship example</span><h3>Two patterns, side by side.</h3><strong>Dining ↔ transport</strong><p>Explore how spending categories move together across observed months. Association does not establish a cause.</p><div className="preview-cadence"><span>Jul · AED 470 / 220</span><span>Aug · 500 / 240</span><span>Sep · 810 / 380</span></div></article>
       </section>
     </div>
   );

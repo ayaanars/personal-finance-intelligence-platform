@@ -94,7 +94,7 @@ it.each(["overview", "insights", "trends", "behaviour", "recurring"] as const)("
   } else {
     expect(await screen.findByText("Here’s what we know now")).toBeVisible();
     expect(screen.getByText("Category composition")).toBeVisible();
-    expect(screen.getByText("Merchant composition")).toBeVisible();
+    expect(screen.getByText("Merchants & activities")).toBeVisible();
   }
   expect(screen.queryByText(/Outflow increased by/)).not.toBeInTheDocument();
 });

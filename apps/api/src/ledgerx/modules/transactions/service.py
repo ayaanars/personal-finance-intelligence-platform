@@ -22,6 +22,7 @@ from ledgerx.modules.transactions.understanding import (
     NORMALIZATION_VERSION,
     RULE_VERSION,
     Category,
+    activity_label,
     merchant_match,
     understand,
 )
@@ -142,6 +143,7 @@ def view(
         raw_description=fact.description,
         normalized_description=str(auto["normalized_description"]),
         merchant=auto["merchant"],
+        display_name=activity_label(fact.description, auto["merchant"]),
         merchant_code=auto["merchant_code"],
         merchant_source=auto["merchant_source"],
         category=Category(str(manual or auto["automatic_category"])),
