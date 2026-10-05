@@ -71,7 +71,9 @@ def inspect(
     if mapping is not None:
         recognition = Recognition(
             source="reviewed",
-            state="recognized", mapping=mapping, evidence=["Mapping choices explicitly reviewed."]
+            state="recognized",
+            mapping=mapping,
+            evidence=["Mapping choices explicitly reviewed."],
         )
     elif recognition.state == "recognized":
         mapping = recognition.mapping

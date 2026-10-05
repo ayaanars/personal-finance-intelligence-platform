@@ -133,6 +133,8 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
               {busy ? "Please wait…" : register ? "Create account" : "Sign in"}
             </button>
           </form>
+          {!register && <p><Link href="/forgot-password">Forgot your password?</Link></p>}
+          <p><Link href="/demo">Explore with fictional demo data</Link></p>
           <p className="auth-switch">
             {register ? "Already have an account?" : "New to LedgerX?"}{" "}
             <Link href={register ? "/login" : "/register"}>

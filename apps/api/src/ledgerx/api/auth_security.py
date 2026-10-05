@@ -28,6 +28,12 @@ def check_origin(request: Request) -> None:
             candidate = "invalid"
     if candidate is not None and candidate != settings.first_party_origin:
         raise AuthError(403, "ORIGIN_INVALID", "Request origin is not permitted")
+    if (
+        settings.environment == "production"
+        and request.method not in SAFE_METHODS
+        and candidate is None
+    ):
+        raise AuthError(403, "ORIGIN_INVALID", "Request origin is required")
     if request.headers.get("sec-fetch-site") == "cross-site":
         raise AuthError(403, "ORIGIN_INVALID", "Request origin is not permitted")
 

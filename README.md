@@ -73,8 +73,8 @@ The frontend forwards `/api/v1/*` to FastAPI using the server-only
 first-party origin. Rebuild/restart Next.js after changing this setting.
 `LEDGERX_FIRST_PARTY_ORIGIN` defaults to `http://localhost:3000`. Set one exact
 browser origin, without a trailing slash. HTTP origins are restricted to loopback;
-HTTPS enables Secure cookies with the `__Host-` prefix. Production runtime remains
-disabled pending deployment/security gates; this is development/test infrastructure.
+HTTPS enables Secure cookies with the `__Host-` prefix. Production mode requires
+HTTPS and explicit PostgreSQL TLS. See the deployment runbook before hosting.
 Backend settings read `apps/api/.env` when launched from that directory; environment
 variables override the file. The URL is required. Liveness works with an unavailable
 database; readiness returns a generic 503. No migrations run at application startup.
@@ -93,7 +93,11 @@ Replace the email with your local account email. Enter and confirm a new 15-128
 character password at the hidden prompts; do not pass it as a command argument.
 The command requires development settings and a local DB host. It updates only
 the matching credential hash/timestamp, preserving all other data and sessions.
-No API or email recovery is provided. See [ADR 0008](docs/adr/0008-local-development-password-reset.md).
+For the one-time recovery flow, use `/forgot-password` and `/reset-password`.
+Configure SMTP for delivery, or issue a development-only link with
+`python -m ledgerx.modules.identity.dev_reset_link --email "you@example.com"`.
+See the [production runbook](docs/runbooks/production.md) and
+[ADR 0016](docs/adr/0016-production-deployment-and-recovery.md).
 
 ### Automated checks
 
@@ -158,9 +162,10 @@ successful password login can create a new one. Future protected endpoints use
 `Authenticated` from `api/auth_security.py`, retain its transaction through their
 operation, and add owner-scoped object authorization.
 
-Rate limiting, production hash calibration, email verification, password recovery,
-OAuth and MFA are deferred. No recovery bypass exists. Public launch requires
-abuse controls and the deployment gates documented in the threat model.
+Production uses PostgreSQL-backed global auth attempt budgets. Password recovery
+uses short-lived, hashed, single-use tokens and revokes all sessions on completion.
+SMTP delivery, production hash calibration, provider edge controls and hosted smoke
+tests are release gates; email verification, OAuth and MFA remain deferred.
 
 See [architecture](docs/ARCHITECTURE.md), [foundation ADR](docs/adr/0001-development-foundation.md),
 [current verification status](docs/STATUS.md), and [contribution guide](CONTRIBUTING.md).
@@ -223,3 +228,21 @@ Review mapping stays available. Confirm import explicitly stages and finalizes.
 Current-period totals, composition and behaviour remain useful with one month;
 only historical comparisons show developing states. See
 [ADR 0015](docs/adr/0015-automatic-import-and-partial-history.md).
+
+## Production deployment and demo
+
+Deployment configuration targets Vercel for `apps/web`, a persistent Render Docker
+service for FastAPI, and Render PostgreSQL 17. The frontend proxies `/api/v1` so
+cookie sessions stay on its own HTTPS origin. `render.yaml` and
+`apps/api/Dockerfile.production` define the backend deployment;
+`apps/web/vercel.json` defines the frontend build.
+
+Create Vercel and Render accounts/projects and configure provider-generated
+production URLs, database roles/TLS, environment secrets and the migration step
+using [the production runbook](docs/runbooks/production.md). No hosted deployment
+has been provisioned yet. Never deploy until all PostgreSQL tests and migration
+checks pass, and complete the hosted browser smoke checklist before public launch.
+
+Open `/demo` to download an eight-month fictional CSV and import it into a separate
+private account. This uses the real recognition, preview, finalization and analytics
+workflow without uploading personal financial data.

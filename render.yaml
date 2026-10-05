@@ -1,0 +1,31 @@
+# Provision only after reviewing billing and docs/runbooks/production.md.
+services:
+  - type: web
+    name: ledgerx-api
+    runtime: docker
+    plan: 1c-2g
+    region: frankfurt
+    dockerfilePath: ./apps/api/Dockerfile.production
+    dockerContext: ./apps/api
+    autoDeployTrigger: "off"
+    healthCheckPath: /health/ready
+    envVars:
+      - key: LEDGERX_ENVIRONMENT
+        value: production
+      - key: LEDGERX_FIRST_PARTY_ORIGIN
+        sync: false
+      - key: LEDGERX_DATABASE_URL
+        sync: false
+      - key: LEDGERX_LOG_LEVEL
+        value: INFO
+      - key: LEDGERX_RESET_DELIVERY
+        value: disabled
+databases:
+  - name: ledgerx-postgres
+    postgresMajorVersion: "17"
+    plan: 0.5c-1g
+    diskSizeGB: 5
+    region: frankfurt
+    databaseName: ledgerx
+    user: ledgerx_owner
+    ipAllowList: []

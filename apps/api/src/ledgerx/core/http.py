@@ -22,8 +22,18 @@ def install_http_handlers(app: FastAPI) -> None:
     async def auth_error(
         request: Request, exc: AuthError | ImportFailure | TransactionFailure
     ) -> JSONResponse:
+        logger.warning(
+            json.dumps(
+                {
+                    "event": "request_rejected",
+                    "code": exc.code,
+                    "correlation_id": request.state.correlation_id,
+                }
+            )
+        )
         return JSONResponse(
             status_code=exc.status,
+            headers={"Retry-After": "60"} if exc.status == 429 else None,
             content={
                 "error": {
                     "code": exc.code,
@@ -77,7 +87,16 @@ def install_http_handlers(app: FastAPI) -> None:
         request.state.correlation_id = correlation_id
         try:
             response = await call_next(request)
-        except Exception:
+        except Exception as exc:
+            logger.error(
+                json.dumps(
+                    {
+                        "event": "unexpected_error",
+                        "exception_type": type(exc).__name__,
+                        "correlation_id": correlation_id,
+                    }
+                )
+            )
             response = JSONResponse(
                 status_code=500,
                 content={

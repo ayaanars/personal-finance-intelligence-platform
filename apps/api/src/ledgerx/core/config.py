@@ -1,22 +1,45 @@
 from typing import Literal
 from urllib.parse import urlsplit
 
-from pydantic import SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ArgumentError
 
 
 class Settings(BaseSettings):
-    """Explicit development/test configuration; production is a later deployment phase."""
+    """Validated runtime settings; production fails closed on unsafe configuration."""
 
     model_config = SettingsConfigDict(
         env_prefix="LEDGERX_", env_file=".env", extra="forbid", hide_input_in_errors=True
     )
 
-    environment: Literal["development", "test"] = "development"
+    environment: Literal["development", "test", "production"] = "development"
     database_url: SecretStr
     first_party_origin: str = "http://localhost:3000"
+    log_level: Literal["INFO", "WARNING", "ERROR"] = "INFO"
+    database_pool_size: int = Field(default=5, ge=1, le=20)
+    database_max_overflow: int = Field(default=5, ge=0, le=20)
+    reset_delivery: Literal["disabled", "smtp"] = "disabled"
+    smtp_host: str | None = None
+    smtp_port: int = Field(default=587, ge=1, le=65535)
+    smtp_username: str | None = None
+    smtp_password: SecretStr | None = None
+    reset_from_email: str | None = None
+
+    @model_validator(mode="after")
+    def production_guards(self) -> "Settings":
+        if self.environment == "production":
+            if not self.cookie_secure:
+                raise ValueError("Production requires an HTTPS first-party origin")
+            url = make_url(self.database_url.get_secret_value())
+            if url.query.get("sslmode") not in {"require", "verify-ca", "verify-full"}:
+                raise ValueError("Production PostgreSQL requires explicit TLS sslmode")
+        if self.reset_delivery == "smtp" and not all(
+            [self.smtp_host, self.smtp_username, self.smtp_password, self.reset_from_email]
+        ):
+            raise ValueError("SMTP recovery requires host, credentials and sender")
+        return self
 
     @field_validator("first_party_origin")
     @classmethod

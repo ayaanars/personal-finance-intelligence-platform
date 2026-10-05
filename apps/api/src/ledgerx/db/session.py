@@ -9,6 +9,9 @@ def build_engine(settings: Settings) -> Engine:
         settings.database_url.get_secret_value(),
         pool_pre_ping=True,
         pool_timeout=5,
+        pool_size=settings.database_pool_size,
+        max_overflow=settings.database_max_overflow,
+        pool_recycle=300,
         connect_args={"connect_timeout": 3, "options": "-c statement_timeout=3000 -c timezone=UTC"},
         hide_parameters=True,
     )

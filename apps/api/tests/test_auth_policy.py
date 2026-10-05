@@ -61,7 +61,7 @@ def test_unsafe_origin_configuration_rejected(origin: str) -> None:
         )
 
 
-def test_production_still_requires_separate_deployment_phase(
+def test_production_rejects_development_defaults(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("LEDGERX_ENVIRONMENT", "production")

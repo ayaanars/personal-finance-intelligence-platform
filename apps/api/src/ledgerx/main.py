@@ -19,7 +19,7 @@ from ledgerx.modules.identity.passwords import Passwords
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     configuration = settings if settings is not None else Settings()
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    logging.basicConfig(level=configuration.log_level, format="%(message)s")
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -27,18 +27,27 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.engine = engine
         app.state.session_factory = build_session_factory(engine)
         app.state.passwords = Passwords()
+        logging.getLogger("ledgerx.lifecycle").info('{"event":"startup"}')
         try:
             yield
         finally:
             engine.dispose()
 
-    app = FastAPI(title="LedgerX API", version="0.1.0", lifespan=lifespan)
+    production = configuration.environment == "production"
+    app = FastAPI(
+        title="LedgerX API",
+        version="0.1.0",
+        lifespan=lifespan,
+        docs_url=None if production else "/docs",
+        redoc_url=None if production else "/redoc",
+        openapi_url=None if production else "/openapi.json",
+    )
     app.state.settings = configuration
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[configuration.first_party_origin],
         allow_credentials=True,
-        allow_methods=["GET", "POST", "PATCH"],
+        allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE"],
         allow_headers=[
             "Content-Type",
             "X-CSRF-Token",
@@ -46,6 +55,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "X-Filename",
             "Idempotency-Key",
             "If-Match",
+            "X-Column-Mapping",
         ],
     )
     install_http_handlers(app)

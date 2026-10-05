@@ -54,6 +54,8 @@ def test_openapi_only_exposes_health_authentication_and_import_operations() -> N
         "/health/live",
         "/health/ready",
         "/api/v1/auth/register",
+        "/api/v1/auth/password-reset/request",
+        "/api/v1/auth/password-reset/complete",
         "/api/v1/auth/login",
         "/api/v1/auth/logout",
         "/api/v1/auth/logout-all",

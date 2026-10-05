@@ -117,6 +117,9 @@ export type RowPage = z.infer<typeof rowPageSchema>;
 export type Category = (typeof categories)[number];
 
 const messages: Record<string, string> = {
+  RESET_INVALID: "This reset link is invalid, expired or already used. Request a new one.",
+  RECOVERY_UNAVAILABLE: "Email recovery is not configured yet. Please contact the operator.",
+  RATE_LIMITED: "Too many attempts. Please wait one minute and retry.",
   MAPPING_INVALID: "Select distinct source columns, an amount mode, currency, and date format.",
   CSV_HEADERS_INVALID: "Column names must be unique, nonblank, and no longer than 120 characters (64 columns maximum).",
   PROFILE_NAME_USED: "That profile name is already used for a different mapping. Choose another name.",
@@ -224,6 +227,12 @@ async function mutate<T>(
   });
 }
 export const api = {
+  requestReset: (email: string) => request("/auth/password-reset/request", z.object({message: z.string()}), {
+    method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({email}),
+  }),
+  completeReset: (token: string, password: string) => request("/auth/password-reset/complete", z.undefined(), {
+    method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({token, password}),
+  }),
   plan: (month?: string) => request(`/goals${month ? `?month=${encodeURIComponent(month)}` : ""}`, planSchema),
   removeGoal: (body: Omit<GoalInput, "target" | "active">) => mutate("/goals", z.undefined(), {method:"DELETE", body:JSON.stringify(body)}),
   saveGoal: (body: GoalInput) => mutate("/goals", z.undefined(), {method:"PUT", body:JSON.stringify(body)}),

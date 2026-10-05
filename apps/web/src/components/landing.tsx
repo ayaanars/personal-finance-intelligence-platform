@@ -201,6 +201,7 @@ export function Landing() {
           Ledger<span>X</span>
         </Link>
         <p>Financial history. A clearer perspective.</p>
+          <Link href="/demo">Try demo data</Link>
         <Link href="/login">Sign in</Link>
       </footer>
     </div>

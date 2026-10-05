@@ -110,7 +110,8 @@ class AuthAudit(IdentityMixin, Base):
     __tablename__ = "auth_audit_events"
     __table_args__ = (
         CheckConstraint(
-            "event_code IN ('registered', 'login', 'login_failed', 'logout', 'logout_all')",
+            "event_code IN ('registered', 'login', 'login_failed', 'logout', 'logout_all', "
+            "'password_reset')",
             name="event_code",
         ),
     )

@@ -17,6 +17,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ledgerx.core.config import Settings
+from ledgerx.db.revision import EXPECTED_SCHEMA_REVISION
 from ledgerx.db.session import build_engine
 from ledgerx.modules.identity.models import User, Workspace
 
@@ -224,9 +225,12 @@ def test_composite_key_rejects_cross_owner_child(db: Connection) -> None:
 
 def test_migration_cycle_and_schema(db: Connection) -> None:
     config = migration_config(db)
-    assert ScriptDirectory.from_config(config).get_heads() == ["0008_import_mapping"]
+    assert ScriptDirectory.from_config(config).get_heads() == ["0010_recovery_audit"]
+    assert ScriptDirectory.from_config(config).get_heads() == [EXPECTED_SCHEMA_REVISION]
     assert set(inspect(db).get_table_names()) == {
         "alembic_version",
+        "password_resets",
+        "auth_rate_limits",
         "users",
         "workspaces",
         "user_credentials",
@@ -243,7 +247,7 @@ def test_migration_cycle_and_schema(db: Connection) -> None:
         "import_mapping_profiles",
     }
     command.check(config)
-    assert db.scalar(text("SELECT version_num FROM alembic_version")) == "0008_import_mapping"
+    assert db.scalar(text("SELECT version_num FROM alembic_version")) == "0010_recovery_audit"
     for table in ("users", "workspaces"):
         assert all(not column["nullable"] for column in inspect(db).get_columns(table))
     command.downgrade(config, "0001_foundation")
